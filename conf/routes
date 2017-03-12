@@ -1,0 +1,33 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.Application.index
+GET     /asyncCall                  controllers.Application.asyncCall
+GET     /getNetworkInterfaces       controllers.NetworkInterfaceController.getNetworkInterfaces
+GET     /callLoading                controllers.Application.socket
+GET     /getAlerts                  controllers.AlertsController.list
+GET     /getCapturedPacketsCount    controllers.IndexController.getCapturedPacketsCount
+GET     /getAnalyzedPacketsCount    controllers.IndexController.getAnalyzedPacketsCount
+GET     /loadSettings                controllers.SettingsController.loadSettings
+GET     /connectToDatabase          controllers.SettingsController.connectToDatabase
+GET     /clearHistory          controllers.SettingsController.clearHistory
+
+POST    /isRunning                  controllers.IndexController.isRunning
+POST    /submitSelectedNetworkInterface controllers.NetworkInterfaceController.submitSelectedNetworkInterface
+POST    /startMonitoringPorts        controllers.IndexController.startMonitoringPorts
+POST    /stopMonitoringPorts        controllers.IndexController.stopMonitoringPorts
+POST    /getCapturedPackets         controllers.PacketsController.getCapturedPackets
+POST  /removeAlert                controllers.AlertsController.removeAlert
+POST  /isDatabaseAvailable          controllers.IndexController.isDatabaseAvailable
+POST  /saveSettings             controllers.SettingsController.saveSettings
+
+DELETE /removeAllPackets            controllers.PacketsController.removeAllPackets
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+
+
+
+    

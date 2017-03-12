@@ -1,0 +1,93 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html ng-app="app">
+    <head>
+        <title>@title</title>
+        <script src="@routes.Assets.at("javascripts/jquery-2.2.4.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/bootstrap.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/angular.min.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/bootstrap-tagsinput.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/bootstrap-tagsinput-angular.js")" type="text/javascript"></script>
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("css/bootstrap.min.css")">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("css/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("css/font-awesome.min.css")">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("css/bootstrap-tagsinput.css")">
+
+        <script src="@routes.Assets.at("javascripts/reactjs/react.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/reactjs/react-dom.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/reactjs/browser.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/ngReact.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/angular-route.min.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/app.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/index-module.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/start-monitoring-ports-module.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/controller/start-monitoring-ports-controller.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/service/start-monitoring-ports-service.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/react-components/network-interfaces-component.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/route-config.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/startmonitoringports/react-components/captured-packets-component.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/alerts/react-components/collapse-tab-component.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/angular-websocket.min.js")" type="text/javascript"></script>
+    </head>
+    <body ng-controller="startMonitoringPortsController as vm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-info btn-block" data-toggle="modal" data-target="#start-monitoring-modal" ng-show="!vm.isRunning"><i class="fa fa-plane"></i> Start monitoring ports</button>
+                    <button class="btn btn-danger stop-monitoring-btn btn-block" ng-show="vm.isRunning" ng-click="vm.stopMonitoringPorts()"><i class="fa fa-stop-circle-o"></i> Stop monitoring ports</button>
+                </div>
+                <div class="col-md-3">
+                    <a class="btn btn-info btn-block" ng-href="#/showAlerts"><i class="fa fa-bell-o"></i> Alerts</a>
+                </div>
+                <div class="col-md-3">
+                    <a class="btn btn-success btn-block" ng-href="#/analyzedPackets"><i class="fa fa-envelope"></i> Analyzed packets</a>
+                </div>
+                <div class="col-md-3">
+                    <a class="btn btn-primary btn-block" ng-href="#/settings"><i class="fa fa-cog"></i> Settings</a>
+                </div>
+            </div>
+            <div class="row">
+                <react-component name="CapturedPacketsNumberSpan" props="vm"></react-component> <react-component name="AnalyzedPacketsNumberSpan" props="vm"></react-component> <react-component name="ConnectionWithDatabase" props="vm"></react-component>
+            </div>
+            <div class="modal fade" id="start-monitoring-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" >
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content" ng-init="vm.getNetworkInterfaces()">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="modal-label">Start monitoring ports</h4>
+                        </div>
+                        <div class="modal-body">
+                            <label for="ignoredIpInput">Ignored IP:</label>
+                            <input id="ignoredIpInput" class="form-control" type="text" ng-model="vm.ignoredIP"/>
+                            <button class="btn btn-info scandetect-button" ng-click="vm.addIgnoredIP()">Add address</button>
+                            <br/>
+                            <input id="ignoredIpsInput" type="text" class="form-control" data-role="tagsinput"/>
+                            <react-component name="NetworkInterfacesComponent" props="vm"></react-component>
+                            <react-component name="SelectedNetworkInterfacesComponent" props="vm"></react-component>
+                            <div class="checkbox">
+                                <label for="runAsHoneypot">
+                                <input type="checkbox" id="runAsHoneypot" ng-model="vm.runAsHoneypot"/>
+                                Run as honeypot:</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" ng-click="vm.startMonitoring()" ng-disabled="!vm.networkInterfaceSelected()">Start</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="content-div" ng-view>
+
+        </div>
+    </body>
+</html>
+
+

@@ -1,0 +1,80 @@
+<br/>
+<div class="container-fluid" ng-init="vm.getCapturedPackets()">
+	<form class="form-inline filter-form" style="font-size: 10px">
+		<div class="row">
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="protocolFilter">Protocol:</label> <input type="text" class="form-control" id="protocolFilter" ng-model="vm.filter.protocol">
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="soruceAddressFilter">Source address:</label> <input type="text" class="form-control" id="soruceAddressFilter" ng-model="vm.filter.sourceAddress">
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="sourcePortFilter">Source port:</label> <input type="text" class="form-control" id="sourcePortFilter" ng-model="vm.filter.sourcePort">
+				</div>
+			</div>
+		</div>
+		<br/>
+		<div class="row">
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="lengthFilter">Length:</label> <input type="text" class="form-control" id="lengthFilter" ng-model="vm.filter.length">
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="destAddressFilter">Destination address:</label> <input type="text" class="form-control" id="destAddressFilter" ng-model="vm.filter.destinationAddress">
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="destPortFilter">Destination port:</label> <input type="text" class="form-control" id="destPortFilter" ng-model="vm.filter.destinationPort">
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-offset-8 col-md-4">
+				<div class="form-group">
+					<button class="btn btn-success filter-button" type="button" ng-click="vm.getCapturedPackets()">Search</button>
+					<button class="btn btn-danger filter-button" type="button" ng-click="vm.removeAllPackets(vm)">Remove all packets</button>
+				</div>
+			</div>
+
+		</div>
+	</form>
+	<br/>
+	<div class="row">
+		<div class="col-md-12">
+			<react-component name="CapturedPacketsTable" props="vm"></react-component>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">
+		
+		</div>
+		<div class="col-md-4">
+			<div class="row">
+				<div class="col-md-4">
+					<button class="btn btn-sm btn-info pull-right" ng-click="vm.previousPage()" ng-disabled="vm.disablePageInput">Previous</button>
+				</div>	
+				<div class="col-md-3">
+					<input class="form-control" style="margin-top: 5px" ng-model="vm.filter.currentPage" ng-change="vm.pageNumberChanged()" ng-disabled="vm.disablePageInput"></input>
+				</div>	
+				<div class="col-md-5">
+					<button class="btn btn-sm btn-info pull-left" ng-click="vm.nextPage()" ng-disabled="vm.disablePageInput">Next</button>
+				</div>	
+			</div>
+
+		</div>
+		<div class="col-md-4">
+			<span class="pull-right">
+				<input class="form-control" disabled="disabled" value="{{vm.filter.numberOfPages}}" style="width: 50px"></input>
+			</span>
+		</div>
+	</div>
+</div>
+
