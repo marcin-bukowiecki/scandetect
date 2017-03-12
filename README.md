@@ -12,7 +12,7 @@ another machine which acts as a honeypot where you can detect network scans.
 ## Requirements
 
 Scandetect requires MongoDB as a backend database. It also requires jNetPcap library
-which you can download from http://jnetpcap.com/download. After downloading it you must 
+which you can download from http://jnetpcap.com/download or find it in the lib folder. After downloading it you must 
 put the jnetpcap.dll file in your Windows/System and Windows/System32 folder. This program
 was tested only on Windows 7 64 bit.
 
