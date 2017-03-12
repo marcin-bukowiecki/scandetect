@@ -1,0 +1,65 @@
+<div class="container-fluid">
+    <div class="alert alert-danger alert-dismissible fade in" role="alert" ng-show="vm.isRunning">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">×</span></button> <strong>Scan detection is running. Cannot change settings.</strong>
+    </div>
+    <div class="alert alert-success alert-dismissible fade in" role="alert" ng-show="vm.savedSettings">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">×</span></button> <strong>Settings saved.</strong>
+    </div>
+    <div class="row" ng-init="vm.loadSettings()">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">Settings</div>
+                <div class="panel-body">
+                    <div class="col-md-6">
+                        <form>
+                            <div class="form-group">
+                                <label for="databaseUrl">Database URL (default: localhost:27017/test) </label>
+                                <input type="text" class="form-control" id="databaseUrl" ng-disabled="vm.isRunning" ng-model="vm.settings.databaseUrl">
+                            </div>
+                            <div class="form-group">
+                                <label for="databaseUsername">Database username (default: NO USERNAME) </label>
+                                <input type="text" class="form-control" id="databaseUsername" ng-disabled="vm.isRunning" ng-model="vm.settings.databaseUsername">
+                            </div>
+                            <div class="form-group">
+                                <label for="databasePassword">Database password (default: NO PASSWORD) </label>
+                                <input type="password" class="form-control" id="databasePassword" ng-disabled="vm.isRunning" ng-model="vm.settings.databasePassword">
+                            </div>
+                            <div class="form-group">
+                                <label for="closedPort">Closed port threshold </label>
+                                <input type="text" class="form-control" id="closedPort" ng-disabled="vm.isRunning" ng-model="vm.settings.closedPortThreshold">
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" ng-disabled="vm.isRunning" ng-model="vm.settings.useHoneypot"> Use honeypot
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="honeypotDatabaseUrl">Honeypot database URL</label>
+                                <input type="text" class="form-control" id="honeypotDatabaseUrl" ng-disabled="vm.isRunning || !vm.settings.useHoneypot" ng-model="vm.settings.honeypotDatabaseUrl">
+                            </div>
+                            <div class="form-group">
+                                <label for="honeypotDatabaseUsername">Honeypot database username</label>
+                                <input type="text" class="form-control" id="honeypotDatabaseUsername" ng-disabled="vm.isRunning || !vm.settings.useHoneypot" ng-model="vm.settings.honeypotDatabaseUsername">
+                            </div>
+                            <div class="form-group">
+                                <label for="honeypotDatabasePassword">Honeypot database password</label>
+                                <input type="password" class="form-control" id="honeypotDatabasePassword" ng-disabled="vm.isRunning || !vm.settings.useHoneypot" ng-model="vm.settings.honeypotDatabasePassword">
+                            </div>
+                            <button type="button" class="btn btn-default" ng-click="vm.saveSettings()" ng-disabled="vm.isRunning">Save</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-warning" ng-click="vm.clearHistory()">Clear history</button>
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-info" ng-click="vm.connectToDatabase()">Connect to database</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

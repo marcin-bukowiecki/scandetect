@@ -1,0 +1,15 @@
+.scandetect-button {
+    margin: 5px;
+}
+
+.btn {
+	margin: 5px !important;	
+}
+
+table.captured-packets-table {
+	font-size: 10px;
+}
+
+form.filter-form input {
+	height: 25px;
+}
