@@ -11,9 +11,6 @@ import scala.annotation.switch
   */
 object AlgorithmUtils {
 
-  /**
-    * Zbiór wspieranych protokołów warstwy internetowej.
-    */
   val SUPPORTED_INTERNET_PROTOCOLS = Set(
     Protocols.ICMP,
     Protocols.ARP,
@@ -21,54 +18,23 @@ object AlgorithmUtils {
     Protocols.IP6
   )
 
-  /**
-    * Zbiór wspieranych protokołów połączeniowych warstwy transportowej.
-    */
   val CONNECTION_PROTOCOLS = Set(
     Protocols.TCP,
     Protocols.SCTP
   )
 
-  /**
-    * Zbiór wspieranych protokołów warstwy transportowej.
-    */
   val SUPPORTED_TRANSPORT_PROTOCOLS = Set(
     Protocols.TCP,
     Protocols.UDP,
     Protocols.SCTP
   )
 
-  /**
-    * Sprawdzenie czy podany protokół jest zorientowany połączeniowo.
-    *
-    * @param protocol - sprawdzany protokół
-    * @return - true jeżeli protokół jest połączeniowy, false jeżeli nie
-    */
   def isConnectionProtocol(protocol: String) = CONNECTION_PROTOCOLS.contains(protocol)
 
-  /**
-    * Sprawdzenie czy podany protokół jest z warstwy internetowej.
-    *
-    * @param protocol - sprawdzany protokół
-    * @return - true jeżeli protokół jest internetowy, false jeżeli nie
-    */
   def isSupportedInternetProtocol(protocol: String) = SUPPORTED_INTERNET_PROTOCOLS.contains(protocol)
 
-  /**
-    * Sprawdzenie czy podany protokół jest z warstwy transprotowej.
-    *
-    * @param protocol - sprawdzany protokół
-    * @return - true jeżeli protokół jest z warstwy transprotowej, false jeżeli nie
-    */
   def isSupportedTransportProtocol(protocol: String) = SUPPORTED_TRANSPORT_PROTOCOLS.contains(protocol)
 
-  /**
-    * Metoda sprawdza czy maszyna na której zainstalowany jest program inicjuje połączenie.
-    *
-    * @param protocol protokół połaczenia
-    * @param packets sekwencja pakietów do analizy
-    * @return true lub false
-    */
   def isInitializingConnection(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP if packets.head.containsOnlySynFlag && packets.head.isOutcoming => true
@@ -77,13 +43,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy połączenie zostało zakończone.
-    *
-    * @param protocol protokół połaczenia
-    * @param packets sekwencja pakietów do analizy
-    * @return true lub false
-    */
   def isConnectionClosed(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP =>
@@ -97,14 +56,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy połaczenie zostało poprawnie zakończone tzn. czy zostały użyte flagi FIN dla protokołu TCP
-    * lub flaga Shutdown dla protokołu SCTP
-    *
-    * @param protocol protokół połaczenia
-    * @param packets sekwencja pakietów do analizy
-    * @return true lub false
-    */
   def isConnectionProperlyClosed(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP =>
@@ -126,14 +77,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Sprawdzenie czy wystąpiła próba nawiązania połaczenia z zamkniętym portem dla ataku TCP SYN. Metoda wróci prawde gdy
-    * liczba pakietów wyniesie 2 i pierwszy będzie przychodzący z flagą SYN,
-    * drugi będzie wychodzacy z flagą RST lub flagami RST ACK.
-    *
-    * @param packets - lista pakietów do sprawdzenia
-    * @return - true jeżeli port jest zamknięty, false jeżeli nie
-    */
   def isPortClosedForTwoPackets(packets: Seq[Packet]) = {
     packets.size match {
       case 2 => packets.head.isIncoming && packets.last.isOutcoming && packets.head.containsOnlySynFlag && (packets.last.containsOnlyRstAckFLags || packets.last.containsOnlyRstFlag)
@@ -141,14 +84,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Sprawdzenie czy wystąpiła próba nawiązania połaczenia z zamkniętym portem dla ataku TCP CONNECT. Metoda zwróci prawdę gdy
-    * liczba pakietów wyniesie 4 i pierwszy będzie przychdozacy z flagą SYN oraz drugi będzie wychodzący z flagami SYN, ACK oraz
-    * trzeci i czwarty będą przychodzące z flagami: trzeci - ACK i czwarty - RST ACK lub RST.
-    *
-    * @param packets - lista pakietów do sprawdzenia
-    * @return - true jeżeli port jest zamknięty, false jeżeli nie
-    */
   def isPortClosedForFourPackets(packets: Seq[Packet]) = {
     packets.size match {
       case 4 => packets.head.isIncoming && packets.head.containsOnlySynFlag && packets.last.isIncoming && (packets.last.containsOnlyRstAckFLags || packets.last.containsOnlyRstFlag) &&
@@ -157,13 +92,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy podana kolekcja pakietów trafiła na zamknięty port.
-    *
-    * @param protocol - protokół w konteksie, którego sprawdzana jest lista pakietów
-    * @param packets - lista pakietów do sprawdzenia
-    * @return true jeżeli port jest zamknięty, false jeżeli nie
-    */
   def isPortClosed(protocol: String, packets: Seq[Packet]) = {
     protocol match {
       case Protocols.TCP => packets.size match {
@@ -182,14 +110,6 @@ object AlgorithmUtils {
     }
   }
 
-
-  /**
-    * Metoda sprawdza czy przesłano pakiety z danymi
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true jeżeli przesłano dane, fałsz jeżeli nie
-    */
   def didSendAnyData(protocol: String, packets: Seq[Packet]) = protocol match {
     case Protocols.TCP => packets.map(_.flags) match {
       case Tcp.Patterns.TCP_CONNECT_OPEN_PORT => false
@@ -203,13 +123,6 @@ object AlgorithmUtils {
     case default => false
   }
 
-  /**
-    * Metoda sprawdza czy wystapił atak TCP ACK WIN
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isAckWinScan(protocol: String, packets: Seq[Packet]) = protocol match {
     case Protocols.TCP =>
       packets.size == 2
@@ -221,13 +134,6 @@ object AlgorithmUtils {
     case _ => false
   }
 
-  /**
-    * Metoda sprawdza czy wystapił podejrzany atak TCP ACK WIN
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isSuspiciousAckWinScan(protocol: String, packets: Seq[Packet]) = protocol match {
     case Protocols.TCP =>
       packets.size == 2
@@ -239,13 +145,6 @@ object AlgorithmUtils {
     case _ => false
   }
 
-  /**
-    * Metoda sprawdza czy pakiet TCP ma jakąkolwiek flagę
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true jeżeli nie ma żadnej flagi, false w przeciwnym razie
-    */
   def tcpPacketWithoutAnyFlag(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP => packets.exists(_.flags.isEmpty)
@@ -253,13 +152,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy wystapił atak TCP Maimon
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isMaimonAttack(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP => packets.size == 2 &&
@@ -275,13 +167,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy wystapił podejrzany atak TCP Maimon
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isSuspiciousMaimonAttack(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP => packets.size == 2 &&
@@ -294,13 +179,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy wystapił atak TCP Xmas
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isXmasAttack(protocol: String, packets: Seq[Packet]): Boolean = {
     (packets.size: @switch) match {
       case 2 if protocol == Protocols.TCP => packets.head.isIncoming &&
@@ -312,13 +190,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy wystapił atak TCP Fin
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isFinAttack(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP =>
@@ -336,13 +207,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy wystapił podejrzany atak TCP Fin
-    *
-    * @param protocol użyty protokół
-    * @param packets sekwencja pakietów
-    * @return true lub false
-    */
   def isSuspiciousFinAttack(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP =>
@@ -355,13 +219,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy połączenie zostało nieporpawnie zakończone.
-    *
-    * @param protocol protokół
-    * @param packets sekwencja pakietów do analizy
-    * @return true lub false
-    */
   def wasNotProperlyFinished(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
       case Protocols.TCP => packets.last.containsOnlyRstAckFLags || packets.last.containsOnlyRstFlag
@@ -369,34 +226,14 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda sprawdza czy ostatni pakiet jest przychodzący.
-    *
-    * @param protocol protokół
-    * @param packets sekwencja pakietów do analizy
-    * @return true lub false
-    */
   def lastIsIncoming(protocol: String, packets: Seq[Packet]): Boolean = {
     packets.last.isIncoming
   }
 
-  /**
-    * Metoda zwraca czas w milisekundach pomiędzy pakietami.
-    *
-    * @param p1 pierwszy pakiet
-    * @param p2 drugi pakiet
-    * @return czas w mikrosekundach
-    */
   def getTimeBetweenCapturedPackets(p1: Packet, p2: Packet): Long = {
     p2.timestamp - p1.timestamp
   }
 
-  /**
-    * Metoda zwraca adres IP źródłowy.
-    *
-    * @param packets sekwencja pakietów do analizy
-    * @return adres IP źródłowy
-    */
   def getSourceAddress(packets: Seq[Packet]) = {
     val incomingPackets = packets.filter(_.isIncoming)
 
@@ -407,12 +244,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Metoda zwraca port docelowy.
-    *
-    * @param packets sekwencja pakietów do analizy
-    * @return port docelowy
-    */
   def getDestinationPort(packets: Seq[Packet]) = {
     val incomingPackets = packets.filter(_.isIncoming)
 
@@ -423,27 +254,12 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Na podstawie typu ataku zwracany jest jego łańcuch tekstowy
-    *
-    * @param iterationResult obiekt typu ataku
-    * @tparam A typ ataku
-    * @return łańcuch tekstowy
-    */
   def getAttackTypeAsString[A <: IterationResult](iterationResult: A) = iterationResult match {
     case SuspiciousMaimonScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) => ScanAttackTypes.AttackType.TCP_MAIMON
     case SuspiciousAckWinScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) => ScanAttackTypes.AttackType.TCP_ACK_WIN
     case SuspiciousFinScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) => ScanAttackTypes.AttackType.TCP_FIN
   }
 
-  /**
-    * Na podstawie zdarzeń zwracane są konkretne zdarzenia ataku skanowania
-    *
-    * @param iterationResult zdarzenie
-    * @param chance szansa ataku
-    * @tparam A typ zdarzenia
-    * @return konkretny atak skanowania
-    */
   def getAttackType[A <: IterationResult](iterationResult: A, chance: Int) = iterationResult match {
     case SuspiciousMaimonScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) => MaimonScanAttack(old, analyzed, chance)
     case SuspiciousAckWinScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) => AckWinScanAttack(old, analyzed, chance)
@@ -454,14 +270,6 @@ object AlgorithmUtils {
 
   val logBase = 2
 
-  /**
-    * Metoda oblicza wartość z funkcji, której argumenty są liczba prób połączenia się do zamkniętych portów
-    * i wartość progowa tych prób.
-    *
-    * @param threshold wartośc progowa
-    * @param closedPorts liczba prób
-    * @return wartość
-    */
   def getClosedPortScore(threshold: Int, closedPorts: Int): Double = {
     if (closedPorts <= threshold) {
       0
@@ -470,13 +278,6 @@ object AlgorithmUtils {
     }
   }
 
-  /**
-    * Sprawdzenie czy protokół jest z warstwy internetowej i jest wspierany, oraz czy istnieje pakiet przychodzacy.
-    *
-    * @param packets pakiety do sprawdzenia
-    * @param protocol protokół
-    * @return prawda lub fałsz
-    */
   def incomingContainsInternetProtocol(packets: Seq[Packet], protocol: String) = {
     isSupportedInternetProtocol(protocol) && packets.exists(_.isIncoming)
   }

@@ -28,15 +28,12 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
 
   implicit val timeout = Timeout(5.seconds)
 
-  //Referencja do kontekstu programu
   var scanDetectContext: ScanDetectContext = _
 
   val log = Logger
 
-  //Flaga sterująca wykrywanie skanowania
   val doWork = new AtomicBoolean(false)
 
-  //Referencja do aktora wykrywajacego użyte oprogramowanie do skanwoania sieci lub portów
   val scanAttackAndTypeDetectorActor = system.actorOf(Props(new ScanAttackAndTypeDetectorActor(alertsService,
     iterationResultHistoryService)))
 
@@ -44,9 +41,6 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
     this.scanDetectContext = scanDetectContext
   }
 
-  /**
-  Rozpoczecie wykrywania skanowania sieci i portów
-   */
   def start(): Unit = {
     doWork.set(true)
     detectScans()
@@ -56,16 +50,10 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
     }
   }
 
-  /**
-  Zatrzymanie wykrywania skanowania sieci i portów
-   */
   def stop(): Unit = {
     doWork.set(false)
   }
 
-  /**
-  Metoda w każdej iteracji pobiera do 500 pakietów i analizuje je pod względem wystapienia ataku skanowania portów
-   */
   def detectScans(): Unit = {
     if (doWork.get()) {
       packetService
@@ -82,10 +70,6 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
     }
   }
 
-  /**
-    * Metoda w każdej iteracji pobiera zdarzenia określające podejrzane ataki skanwoania sieci i sprawdza je pod
-    * względem wystąpienia ataku skanowania sieci
-    */
   def detectNetworkScans(): Unit = {
     if (doWork.get()) {
       iterationResultHistoryService
@@ -102,35 +86,21 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
     }
   }
 
-  /**
-    * Metoda po iteracji algorytmu w zależności od wyników zgłasza alarm skanowania lub nie i kontynuuje działanie
-    * algorytmu wykrywania skanowania
-    *
-    * @param iterationResult zdarzenie
-    * @tparam A typ zdarzenia
-    * @return asynchroncizne zadanie
-    */
   def dispatch[A <: IterationResult](iterationResult: A): Any = {
     if (scanDetectContext.isHoneypot) {
-      //Przeniesienie pakietow do kolekcji przeanalizowanych
       packetService.markAsAnalyzedAndRemoveOld(iterationResult.captured).map(_ =>
-        //wysłanie alarmu skanowania do aktora określającego użyte oprogramowanie
         scanAttackAndTypeDetectorActor ? NetworkScanAlert(iterationResult.captured, iterationResult.analyzed)
       )
     } else {
       iterationResult match {
         case RemoveFinePackets(old: Seq[Packet], analyzed: Seq[Packet]) =>
-          //Usuwanie pakietów z bazy danych
           packetService.removeMultiple(old).map(_ =>
             packetService.removeMultipleAnalyzed(analyzed)
           )
         case _ =>
-          //Przeniesienie pakietow do kolekcji przeanalizowanych
           packetService.markAsAnalyzedAndRemoveOld(iterationResult.captured).map(_ =>
             iterationResult match {
-              // Kontynuacja iteracji
               case r@ContinueIteration(old: Seq[Packet], analyzed: Seq[Packet]) =>
-              //wysłanie alarmu skanowania do aktora określającego użyte oprogramowanie
               case r => scanAttackAndTypeDetectorActor ? r
             }
           )

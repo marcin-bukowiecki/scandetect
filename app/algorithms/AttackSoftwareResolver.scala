@@ -5,9 +5,6 @@ import utils.{ScanAttackTypes, _}
 
 object AttackSoftwareResolver {
 
-  /**
-    * Wielkości pakietów dla UDP
-    */
   val packetLength = Map(
     ScanAttackTypes.AttackType.UDP -> Map(
       8 -> Set(ScanningSoftware.ANGRY_IP_SCANNER),
@@ -16,9 +13,6 @@ object AttackSoftwareResolver {
     )
   )
 
-  /**
-    * Wielkości nagłówków dla TCP_SYN
-    */
   val headerLength = Map(
     ScanAttackTypes.AttackType.TCP_SYN -> Map(
       32 -> Set(ScanningSoftware.ANGRY_IP_SCANNER),
@@ -33,9 +27,6 @@ object AttackSoftwareResolver {
     )
   )
 
-  /**
-    * Wielkości okna dla TCP_SYN
-    */
   val windowLength = Map(
     ScanAttackTypes.AttackType.TCP_SYN -> Map(
       32 -> Set(ScanningSoftware.ANGRY_IP_SCANNER),
@@ -51,9 +42,6 @@ object AttackSoftwareResolver {
     )
   )
 
-  /**
-    * Pole data dla ICMP
-    */
   val dataField = Map(
     ScanAttackTypes.AttackType.ICMP -> Map(
       56 -> Set(ScanningSoftware.ANGRY_IP_SCANNER),
@@ -62,9 +50,6 @@ object AttackSoftwareResolver {
     )
   )
 
-  /**
-    * Zmapowanie typów ataków do oprogramowań
-    */
   val attackTypes = Map(
     ScanAttackTypes.AttackType.TCP_SYN -> Set(ScanningSoftware.NMAP,
       ScanningSoftware.ZMAP,
@@ -88,13 +73,6 @@ object AttackSoftwareResolver {
       ScanningSoftware.ZMAP)
   )
 
-  /**
-    * Określenie oprogramowania
-    *
-    * @param packets sekwencja pakietów do analizy
-    * @param attackType typ ataku
-    * @return użyte oprogramwoania
-    */
   def resolve(packets: Seq[Packet], attackType: String): Set[String] = {
     packets.head.protocol match {
       case Protocols.TCP =>
@@ -119,12 +97,6 @@ object AttackSoftwareResolver {
     }
   }
 
-  /**
-    * Określenie oprogramowania
-    *
-    * @param packets sekwencja pakietów do analizy
-    * @return użyte oprogramwoania
-    */
   def resolve(packets: Seq[Packet]): Set[String] = {
     packets.head.protocol match {
       case Protocols.UDP =>
@@ -145,14 +117,6 @@ object AttackSoftwareResolver {
     }
   }
 
-  /**
-    * Metoda próbuje zawęzić użyte oprogramowanie do jednego
-    *
-    * @param protocol protokół
-    * @param packets sekwencja pakietów
-    * @param software sewkencja użytych oprogramowań
-    * @return zbiór użytych oprogramowań
-    */
   def tryToResolveMultipleSoftware(protocol: String, packets: Seq[Packet], software: Set[String]): Set[String] = {
     protocol match {
       case Protocols.UDP =>

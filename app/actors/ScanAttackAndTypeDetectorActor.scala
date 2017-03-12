@@ -28,11 +28,7 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
 
   implicit val executionContext: ExecutionContext = context.system.dispatchers.lookup("software-detect-actor-context")
 
-  /**
-    * Metoda określa oprogramowanie jakie zostało użyte podczas skanowania sieci lub portów.
-   */
-  override def receive = {
-    //Stworzenie alarmu dla ataku TCP Xmas
+   override def receive = {
     case attackType@XmasScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
@@ -46,7 +42,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
         100
       ).map(alert => alertsService.create(alert))
 
-    //Stworzenie alarmu dla ataku TCP Null
     case attackType@TcpNullScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
@@ -60,7 +55,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
           100
         ).map(alert => alertsService.create(alert))
 
-    //Stworzenie alarmu dla ataku TCP ACK WIN
     case attackType@AckWinScanAttack(old: Seq[Packet], analyzed: Seq[Packet], chance: Int) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
@@ -74,8 +68,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
           100
         ).map(alert => alertsService.create(alert))
 
-
-    //Stworzenie konkretnego alarmu na podstawie wcześniej stworzonego ogólnego alarmu skanowania portów
     case alert@PortScanAlert(old: Seq[Packet], analyzed: Seq[Packet], chance: Int) =>
       val incomingPacket = getIncomingPacket(alert.all).get
       val protocol = incomingPacket.protocol
@@ -100,7 +92,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
         case _ => log.info("No scan alert matching.")
       }
 
-    //Stworzenie konkretnego alarmu na podstawie wcześniej stworzonego ogólnego alarmu skanowania sieci
     case networkScanAlert@NetworkScanAlert(old: Seq[Packet], analyzed: Seq[Packet]) =>
       val protocol = networkScanAlert.all.head.protocol
 
@@ -175,15 +166,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
       }
   }
 
-  /**
-    * Metoda tworzy alarm dla ataku skanowania typu TCP tj. TCP SYN, TCP CONNECT
-    *
-    * @param sourceAddress adres zródłowy
-    * @param destinationPort port docelowy
-    * @param iterationResult zdarzenie
-    * @param scanType typ skanowania
-    * @return
-    */
   def matchTcpProtocolAttackPattern(sourceAddress: String, destinationPort: Int, iterationResult: IterationResult,
                                     scanType: String): Future[Alert] = {
 
@@ -239,18 +221,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
     }
   }
 
-  /**
-    * Tworzy obiekt alarmu, który zostanie zapisany w bazie danych.
-    *
-    * @param scanType typ skanowania
-    * @param attackType typ ataku
-    * @param sourceAddress adres IP źródłowy
-    * @param description opis
-    * @param softwareUsed uzyte oprogramowanie
-    * @param destinationPort port docelowy
-    * @param chance szansa wykrycia ataku
-    * @return obiekt alarmu do zapisu w bazie danych
-    */
   def createAlert(scanType: String, attackType: String, sourceAddress: String, description: String,
                   softwareUsed: Set[String], destinationPort: Int, chance: Int): Future[Alert] = {
     getPortScanPorts(attackType, sourceAddress).map(result =>
@@ -267,12 +237,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
     )
   }
 
-  /**
-    * Metoda zwraca pierwszy przychodzący pakiet
-    *
-    * @param packets pakiety do analizy
-    * @return pierwszy przychodzacy pakiet
-    */
   def getIncomingPacket(packets: Seq[Packet]): Option[Packet] = {
     var packet: Option[Packet] = None
     breakable {
@@ -286,12 +250,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
     packet
   }
 
-  /**
-    * Metoda w zależności od alertu zwraca szansę wystapienia ataku skanowania.
-    *
-    * @param iterationResult zdarzenie
-    * @return
-    */
   def getChance(iterationResult: IterationResult) = {
     iterationResult match {
       case alert@PortScanAlert(old: Seq[Packet], analyzed: Seq[Packet], chance: Int) => alert.chance
@@ -299,12 +257,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
     }
   }
 
-  /**
-    * Pobranie listy portów z historii zdarzeń dla podanego adresu źródłowego
-    *
-    * @param sourceAddress adres źródłowy
-    * @return zbiór portów
-    */
   def getPortScanPorts(attackType: String, sourceAddress: String): Future[Set[Int]] = {
     val f1 = iterationResultHistoryService.getPortScanPorts(sourceAddress)
 

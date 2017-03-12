@@ -30,24 +30,14 @@ public class ScanDetectNeuralNetwork {
 
     private static Logger log = LoggerFactory.getLogger(ScanDetectNeuralNetwork.class);
 
-    /*
-    Only for testing
-     */
     public static void main(String[] args) throws IOException, InterruptedException {
         ScanDetectNeuralNetwork test = new ScanDetectNeuralNetwork();
         test.init();
     }
 
-    /**
-     * Inicjalizacja sieci neuronowej
-     *
-     * @throws IOException
-     * @throws InterruptedException
-     */
     public void init() throws IOException, InterruptedException {
         log.info("Initializing transport layer neural network.");
 
-        //Czytanie pliku z danymi do nauki
         int numLinesToSkip = 0;
         String delimiter = ",";
         RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
@@ -87,14 +77,11 @@ public class ScanDetectNeuralNetwork {
         neuralNetwork.init();
         neuralNetwork.setListeners(new ScoreIterationListener(1));
 
-
-        //Trenowanie
         for( int i=0; i<nEpochs; i++ ){
             iterator.reset();
             neuralNetwork.fit(iterator);
         }
 
-        //Testy
         INDArray input = Nd4j.create(new double[] {1,1,1,1,0,0,0});
         INDArray out = neuralNetwork.output(input, false);
         System.out.println(out);
@@ -112,12 +99,6 @@ public class ScanDetectNeuralNetwork {
         System.out.println(out);
     }
 
-    /**
-     * Metoda oblicza z wykorzystaniem sieci neuronowej szansę wykonania ataku skanowania
-     *
-     * @param params lista wartości cech i współczynniki
-     * @return wynik sieci neuronowej
-     */
     private String getResult(List<Double> params) {
         System.out.println("Getting result from neural network...");
         System.out.println("=====================================");
@@ -143,12 +124,6 @@ public class ScanDetectNeuralNetwork {
         return out.toString();
     }
 
-    /**
-     * Metoda oblicza z wykorzystaniem sieci neuronowej szansę wykonania ataku skanowania
-     *
-     * @param params lista wartości cech i współczynniki
-     * @return wynik sieci neuronowej w procentach
-     */
     public int getResultAsPercentage(List<Double> params) {
         final String result = getResult(params);
         final double range = 2;

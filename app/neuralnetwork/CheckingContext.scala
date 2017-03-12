@@ -14,34 +14,23 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
                       val usedClosedPorts: Set[Int],
                       val usedOpenPorts: Set[Int]) {
 
-  /**
-    * Inicjowanie wartości dla poszczególnych cech i współczynników
-    *
-    * @return sekwencja z odpowiednimi wartościami dla sieci neuronowej
-    */
   def createWeights: Seq[Double] = {
     Seq(
-      if (hostWasInitializingConnection) 1 else 3, //Inicjowanie połączenia
-      if (sendData && didNotSendData) 2 else if (sendData && !didNotSendData) 1 else 3, //Transmisja danych
-      if (triedConnectToClosedPortAfterOpen) 3 else 1, //Próba połaćzenia się z zamkniętym protem po otwartym
-      closedPortsThresholdResult match { //Wartość progowa zamkniętych portów
+      if (hostWasInitializingConnection) 1 else 3,
+      if (sendData && didNotSendData) 2 else if (sendData && !didNotSendData) 1 else 3,
+      if (triedConnectToClosedPortAfterOpen) 3 else 1,
+      closedPortsThresholdResult match {
         case CheckingContext.AtThreshold(address: String, threshold: Int) => 2
         case CheckingContext.UnderThreshold(address: String, threshold: Int) => 1
         case CheckingContext.BeyondThreshold(address: String, threshold: Int) => 3
       },
-      getNeighboringPortScanFactor, //Współczynnik sąsiedztwa
-      packetOpenPortFactor, //Współczynnik otwartych portów do liczby pakietów
-      closedPortsFactor //Współczynnik liczby prób połaczeń z zamkniętymi portami
+      getNeighboringPortScanFactor,
+      packetOpenPortFactor,
+      closedPortsFactor
     )
   }
 
-  /**
-    * Metoda oblicza współczynnik sąsiedztwa
-    *
-    * @return obliczony współczynnik
-    */
   def getNeighboringPortScanFactor: Double = {
-    //sortowanie portów
     val sortedAllPorts = (usedClosedPorts ++ usedOpenPorts).toSeq.sorted
 
     if (sortedAllPorts.size > 1) {
@@ -53,11 +42,6 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
     }
   }
 
-  /**
-    * Metoda oblicza współczynnik otwartych portów do liczby pakietów
-    *
-    * @return obliczony współczynnik
-    */
   def packetOpenPortFactor: Double = {
     if (numberOfTransportedPacketsToOpenPorts == 0) {
       0
@@ -66,11 +50,6 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
     }
   }
 
-  /**
-    * Metoda oblicza współczynnik liczby prób połaczeń z zamkniętymi portami
-    *
-    * @return obliczony współczynnik
-    */
   def closedPortsFactor: Double = {
     AlgorithmUtils.getClosedPortScore(closedPortsThresholdResult.threshold, usedClosedPorts.size)
   }
@@ -78,10 +57,6 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
 }
 
 object CheckingContext {
-
-  /**
-    *  Budowanie obiektu kontekstu cech i współczynników
-    */
 
   def apply(hostWasInitializingConnection: Boolean,
           sendData: Boolean,
