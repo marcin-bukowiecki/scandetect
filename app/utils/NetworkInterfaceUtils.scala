@@ -3,7 +3,10 @@ package utils
 object NetworkInterfaceUtils {
 
   def getReadableIPv4Address(address: String): String = {
-    address.split(":")(1).dropRight(1).mkString
+    address
+      .split(Constants.COLON)(Constants.INTEGER_ONE)
+      .dropRight(Constants.INTEGER_ONE)
+      .mkString
   }
 
 }

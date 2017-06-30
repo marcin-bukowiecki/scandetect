@@ -21,6 +21,10 @@ object Constants {
 
   val ONE_SECOND = 1000
 
+  val COLON = ":"
+
+  val INTEGER_ONE = 1
+
   object SettingsKeys {
     val DATABASE_URL = "DATABASE_URL"
     val DATABASE_USERNAME = "DATABASE_USERNAME"
@@ -35,5 +39,7 @@ object Constants {
   object Numbers {
     val ZERO = 0
   }
+
+
 
 }

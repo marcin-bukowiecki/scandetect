@@ -1,4 +1,5 @@
-import algorithms.AlgorithmUtils
+package algorithms
+
 import models.Packet
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
