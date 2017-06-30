@@ -40,6 +40,4 @@ object Constants {
     val ZERO = 0
   }
 
-
-
 }
