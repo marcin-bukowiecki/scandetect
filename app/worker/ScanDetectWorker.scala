@@ -4,38 +4,39 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import actors.ScanAttackAndTypeDetectorActor
 import akka.actor.{ActorSystem, Props}
-import algorithms._
-import com.google.inject.{Inject, Singleton}
-import models.Packet
-import play.api.Logger
-import services.{AlertsService, IterationResultHistoryService, PacketService}
 import akka.pattern.ask
 import akka.util.Timeout
+import algorithms._
+import com.google.inject.{Inject, Singleton}
 import context.ScanDetectContext
+import models.Packet
+import play.api.Logger
+import repositories.{AlertRepositoryImpl, IterationResultHistoryRepository, IterationResultHistoryRepositoryImpl, PacketRepositoryImpl}
+import utils.Constants
 import utils.Constants.SettingsKeys
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 @Singleton
-class ScanDetectWorker @Inject() (packetService: PacketService,
+class ScanDetectWorker @Inject() (packetService: PacketRepositoryImpl,
                                   scanDetectionAlgorithm: ScanDetectionAlgorithm,
                                   system: ActorSystem,
-                                  alertsService: AlertsService,
-                                  iterationResultHistoryService: IterationResultHistoryService) {
+                                  alertsService: AlertRepositoryImpl,
+                                  iterationResultHistoryRepository: IterationResultHistoryRepository) {
 
-  implicit val timeout = Timeout(5.seconds)
+  implicit private val timeout = Timeout(5.seconds)
+
+  private val log = Logger
 
   var scanDetectContext: ScanDetectContext = _
-
-  val log = Logger
 
   val doWork = new AtomicBoolean(false)
 
   val scanAttackAndTypeDetectorActor = system.actorOf(Props(new ScanAttackAndTypeDetectorActor(alertsService,
-    iterationResultHistoryService)))
+    iterationResultHistoryRepository)))
 
   def setContext(scanDetectContext: ScanDetectContext) = {
     this.scanDetectContext = scanDetectContext
@@ -72,8 +73,8 @@ class ScanDetectWorker @Inject() (packetService: PacketService,
 
   def detectNetworkScans(): Unit = {
     if (doWork.get()) {
-      iterationResultHistoryService
-         .findByResultType(ScanDetectionAlgorithm.IterationResultHistoryLabels.suspiciousNetworkScan)
+      iterationResultHistoryRepository
+         .findByResultType(Constants.IterationResultHistoryLabels.suspiciousNetworkScan)
           .onComplete {
           case Success(rs) =>
             Future.sequence(

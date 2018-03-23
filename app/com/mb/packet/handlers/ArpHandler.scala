@@ -1,4 +1,5 @@
 package com.mb.packet.handlers
+
 import models.Packet
 import org.jnetpcap.packet.PcapPacket
 import org.jnetpcap.packet.format.FormatUtils
@@ -6,9 +7,6 @@ import org.jnetpcap.protocol.network.Arp
 import utils.PacketUtils.PacketBuilder
 import utils.{Constants, PacketUtils, PortUtils, Protocols}
 
-/**
-  * Created by Marcin on 2017-06-30.
-  */
 class ArpHandler(networkInterfacesAddresses: Set[String], arp: Arp) extends BaseHandler {
 
   override def handle(pcapPacket: PcapPacket): Option[Packet] = {

@@ -1,13 +1,17 @@
 package com.mb.packet.handlers
+
 import models.Packet
 import org.jnetpcap.packet.PcapPacket
 import org.jnetpcap.protocol.network.{Ip4, Ip6}
 import utils.PacketUtils.PacketBuilder
 import utils._
 
-/**
-  * Created by Marcin on 2017-06-30.
-  */
+object IpHandler {
+
+  def apply(networkInterfacesAddresses: Set[String]): IpHandler = new IpHandler(networkInterfacesAddresses)
+  
+}
+
 class IpHandler(networkInterfacesAddresses: Set[String]) extends BaseHandler {
 
   override def handle(pcapPacket: PcapPacket): Option[Packet] = {

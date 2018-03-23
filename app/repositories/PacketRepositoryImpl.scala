@@ -1,10 +1,9 @@
-package services
+package repositories
 
 import akka.actor.ActorSystem
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import context.MongoDBConnection
 import models.{AnalyzedPacketFilter, Packet, PacketData}
-import reactivemongo.api.QueryOpts
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
 import reactivemongo.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONHandler, BSONObjectID, Macros}
@@ -12,20 +11,21 @@ import utils.{PortUtils, Protocols}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait PacketServiceTrait {
+@ImplementedBy(classOf[PacketRepositoryImpl])
+trait PacketRepository[T] {
 
-  def create(packet: Packet): Future[Unit]
-  def getAssociatedWithFlowKey(flowKey: Long, additionalHash: Long): Future[Seq[Packet]]
-  def getToAnalyze(limit: Int): Future[Seq[Packet]]
-  def removeMultiple(packetsToRemove: Seq[Packet]): Future[WriteResult]
-  def markAsAnalyzed(packets: Seq[Packet]): Future[MultiBulkWriteResult]
-  def markAsAnalyzedAndRemoveOld(packets: Seq[Packet]): Future[Unit]
+  def create(packet: T): Future[Unit]
+  def getAssociatedWithFlowKey(flowKey: Long, additionalHash: Long): Future[Seq[T]]
+  def getToAnalyze(limit: Int): Future[Seq[T]]
+  def removeMultiple(packetsToRemove: Seq[T]): Future[WriteResult]
+  def markAsAnalyzed(packets: Seq[T]): Future[MultiBulkWriteResult]
+  def markAsAnalyzedAndRemoveOld(packets: Seq[T]): Future[Unit]
   def removeByFlowKey(flowKey: Long): Future[WriteResult]
-  def getAssociatedWithFlowKeyAndProtocol(flowKey: Long, protocol: String): Future[Seq[Packet]]
+  def getAssociatedWithFlowKeyAndProtocol(flowKey: Long, protocol: String): Future[Seq[T]]
 }
 
 @Singleton
-class PacketService @Inject() (val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) extends PacketServiceTrait {
+class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) extends PacketRepository[Packet] {
 
   implicit val myExecutionContext: ExecutionContext = akkaSystem.dispatchers.lookup("packet-service-context")
 
@@ -33,10 +33,10 @@ class PacketService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
   implicit def packetWriter: BSONDocumentWriter[Packet] = Macros.writer[Packet]
 
   implicit def infoMapReader: BSONHandler[BSONDocument, Map[String, String]] = PacketData
-  implicit def idReader: BSONHandler[BSONObjectID, Option[BSONObjectID]] = Test
+  implicit def idReader: BSONHandler[BSONObjectID, Option[BSONObjectID]] = IdReader
 
-  def packetsCollection = mongoDBConnection.database.map(_.collection[BSONCollection]("capturedPackets"))
-  def analyzedPacketsCollection = mongoDBConnection.database.map(_.collection[BSONCollection]("analyzedPackets"))
+  def packetsCollection: Future[BSONCollection] = mongoDBConnection.database.map(_.collection[BSONCollection]("capturedPackets"))
+  def analyzedPacketsCollection: Future[BSONCollection] = mongoDBConnection.database.map(_.collection[BSONCollection]("analyzedPackets"))
 
   def create(packet: Packet): Future[Unit] = {
     val f = packetsCollection.flatMap(_.insert(packet).map(_ => {}))
@@ -137,7 +137,7 @@ class PacketService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     markAsAnalyzed(packets).flatMap(_ => removeMultiple(packets).map(_ => ()))
   }
 
-  def removeByFlowKey(flowKey: Long) = {
+  def removeByFlowKey(flowKey: Long): Future[WriteResult] = {
     val query = BSONDocument(
       "flowKey" -> flowKey
     )
@@ -149,11 +149,11 @@ class PacketService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     rs
   }
 
-  def getNumberOfPacketsInDatabase(): Future[Int] = {
+  def getNumberOfPacketsInDatabase: Future[Int] = {
     packetsCollection.flatMap(_.count())
   }
 
-  def getNumberOfAnalyzedPacketsInDatabase(): Future[Int] = {
+  def getNumberOfAnalyzedPacketsInDatabase: Future[Int] = {
     analyzedPacketsCollection.flatMap(_.count())
   }
 
@@ -251,7 +251,7 @@ class PacketService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     })
   }
 
-  object Test extends BSONHandler[BSONObjectID, Option[BSONObjectID]] {
+  object IdReader extends BSONHandler[BSONObjectID, Option[BSONObjectID]] {
     override def read(bson: BSONObjectID): Option[BSONObjectID] = {
       Option(bson)
     }

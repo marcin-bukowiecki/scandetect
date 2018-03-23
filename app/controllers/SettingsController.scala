@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import context.ScanDetectContext
 import play.api.mvc.{Action, Controller}
 import play.api.libs.json.{JsBoolean, JsNumber, JsString, Json}
-import services.{IterationResultHistoryService, SettingsService}
+import repositories.{IterationResultHistoryRepositoryImpl, SettingsService}
 import utils.Constants.SettingsKeys
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Singleton
 class SettingsController @Inject()(settingsService: SettingsService,
                                    scanDetectContext: ScanDetectContext,
-                                   iterationResultHistoryService: IterationResultHistoryService) extends Controller {
+                                   iterationResultHistoryService: IterationResultHistoryRepositoryImpl) extends Controller {
 
   def loadSettings = Action {
     if(settingsService.validateSettings()) {

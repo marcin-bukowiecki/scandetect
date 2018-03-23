@@ -1,4 +1,4 @@
-package services
+package repositories
 
 import akka.actor.ActorSystem
 import com.google.inject.{Inject, Singleton}

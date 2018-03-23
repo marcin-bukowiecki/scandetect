@@ -9,9 +9,6 @@ import scala.concurrent.Future
 import scala.concurrent._
 import scala.concurrent.duration._
 
-/**
-  * Created by Marcin on 2016-10-24.
-  */
 @ImplementedBy(classOf[MongoDBConnectionImpl])
 trait MongoDBConnection {
   def database: Future[DefaultDB]

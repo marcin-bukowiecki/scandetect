@@ -2,21 +2,21 @@ package algorithms
 
 import java.lang.Double
 
+import akka.actor.ActorSystem
+import algorithms.AlgorithmUtils._
 import com.google.inject.{Inject, Singleton}
 import models.{IterationResultHistory, Packet}
-import play.api.Logger
-import services.{HoneypotService, IterationResultHistoryService, PacketService}
-import worker.ScanDetectWorker
-import AlgorithmUtils._
-import akka.actor.ActorSystem
 import neuralnetwork.CheckingContext
 import neuralnetwork.CheckingContext._
+import play.api.Logger
+import repositories.{HoneypotService, IterationResultHistoryRepository, PacketRepositoryImpl}
 import utils.Constants.SettingsKeys
-import utils.{Constants, Protocols}
+import utils.{Constants, NetworkLayerGroupKey, PacketGroupKey, Protocols}
+import worker.ScanDetectWorker
 
-import collection.JavaConverters._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait Algorithm {
   def detect(worker: ScanDetectWorker, packets: Seq[Packet]): Future[Unit]
@@ -28,96 +28,40 @@ trait Algorithm {
   def createIterationResultHistory[A <: IterationResult](iterationResult: A)
 }
 
-object ScanDetectionAlgorithm {
-
-  val PORT_SCAN_CONTEXT_LABELS = Set(
-    IterationResultHistoryLabels.didNotSendData,
-
-    IterationResultHistoryLabels.portClosed,
-
-    IterationResultHistoryLabels.suspiciousFinScanAttack,
-
-    IterationResultHistoryLabels.suspiciousAckWinScanAttack,
-
-    IterationResultHistoryLabels.suspiciousMaimonScanAttack
-  )
-
-  val OPEN_PORTS_COUNTER_LABELS = Set(
-    IterationResultHistoryLabels.sendData,
-
-    IterationResultHistoryLabels.removeFinePackets,
-
-    IterationResultHistoryLabels.didNotSendData
-  )
-
-  val CLOSED_PORTS_COUNTER_LABELS = Set(
-    IterationResultHistoryLabels.portClosed,
-
-    IterationResultHistoryLabels.suspiciousFinScanAttack,
-
-    IterationResultHistoryLabels.suspiciousAckWinScanAttack,
-
-    IterationResultHistoryLabels.suspiciousMaimonScanAttack
-  )
-
-  object IterationResultHistoryLabels {
-    val didNotSendData = DidNotSendData.getClass.getName.split("\\$").last
-    val initializingConnection = InitializingConnection.getClass.getName.split("\\$").last
-    val sendData = SendData.getClass.getName.split("\\$").last
-    val initializingRemoveFinePackets = InitializingRemoveFinePackets.getClass.getName.split("\\$").last
-    val portClosed = PortClosed.getClass.getName.split("\\$").last
-    val suspiciousNetworkScan = SuspiciousNetworkScan.getClass.getName.split("\\$").last
-    val removeFinePackets = RemoveFinePackets.getClass.getName.split("\\$").last
-    val suspiciousFinScanAttack = SuspiciousFinScanAttack.getClass.getName.split("\\$").last
-    val suspiciousAckWinScanAttack = SuspiciousAckWinScanAttack.getClass.getName.split("\\$").last
-    val suspiciousMaimonScanAttack = SuspiciousMaimonScanAttack.getClass.getName.split("\\$").last
-  }
-
-}
-
-/**
-  * Created by Marcin on 2016-10-22.
-  */
 @Singleton
-class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
-                                        iterationResultHistoryService: IterationResultHistoryService,
-                                        honeypotService: HoneypotService,
-                                        akkaSystem: ActorSystem) {
+class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
+                                        val iterationResultHistoryRepository: IterationResultHistoryRepository,
+                                        val honeypotService: HoneypotService,
+                                        val akkaSystem: ActorSystem) {
 
-  val log = Logger
+  private val helper = ScanDetectionAlgorithmHelper()
 
-  implicit val workerContext: ExecutionContext = akkaSystem.dispatchers.lookup("worker-context")
+  private val log = Logger
+
+  private implicit val workerContext: ExecutionContext = akkaSystem.dispatchers.lookup("worker-context")
 
   var worker: ScanDetectWorker = _
 
   def detect(worker: ScanDetectWorker, packets: Seq[Packet]): Seq[Future[Any]] = {
     this.worker = worker
 
-    val groupByForNetworkLayer = packets.sortBy(_.timestamp).groupBy(p =>
-      (p.flowKey, p.additionalHashNetwork)
-    )
-
+    val groupByForNetworkLayer = helper.groupPacketsByFlowKeyAndAdditionalHash(packets)
     log.info(s"Starting iteration for detecting scans for ${packets.size} packets.")
-    val groupedByFlowKey: Map[(Long, Long, Long), Seq[Packet]] = packets.sortBy(_.timestamp).groupBy(p =>
-      if (p.protocol != Protocols.ICMP)
-      (p.flowKey, p.additionalHash, p.additionalHashNetwork)
-      else
-      (p.flowKey, Constants.ICMP_HASHCODE, p.additionalHashNetwork)
-    )
 
+    val groupedByFlowKey: Map[NetworkLayerGroupKey, Seq[Packet]] = helper.groupPacketsByFlowKeyAdditionalHashAndNetworkProtocolHash(packets)
     log.info(s"Got ${groupedByFlowKey.size} groups of flow keys.")
 
     val iterationResult: Future[Iterable[IterationResult]] = Future.sequence(groupedByFlowKey.map(entry => {
       val f = Future {
-        val flowKey : Long = entry._1._1
+        val flowKey : Long = entry._1.flowKey
         val protocol = entry._2.head.protocol
-        val additionalHash : Long = entry._1._2
-        val additionalHashNetwork : Long = entry._1._3
+        val additionalHash : Long = entry._1.additionalHash
+        val additionalHashNetwork : Long = entry._1.additionalNetworkLayerHash
         val newPackets = entry._2 ++ (if (protocol == Protocols.ICMP) {
-          groupByForNetworkLayer.getOrElse((flowKey, additionalHashNetwork), Seq())
+          groupByForNetworkLayer.getOrElse(PacketGroupKey(flowKey, additionalHashNetwork), Seq())
             .filter(_.isUdp)
         } else if (protocol == Protocols.UDP) {
-          groupedByFlowKey.getOrElse((flowKey, Constants.ICMP_HASHCODE, additionalHashNetwork), Seq())
+          groupedByFlowKey.getOrElse(NetworkLayerGroupKey(flowKey, Constants.ICMP_HASHCODE, additionalHashNetwork), Seq())
             .filter(_.isIcmp)
         } else {
           Seq()
@@ -127,7 +71,7 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
 
         val f1 = fetchPacketsFromThisConnection(protocol, flowKey, additionalHash)
         while (!f1.isCompleted) Thread.sleep(500)
-        val analyzed = f1.value.get.get //pakiety wcześniej przeanalizowane
+        val analyzed = f1.value.get.get //previous analyzed packets
 
         if (analyzed.nonEmpty) log.info(s"Fetched ${analyzed.size} packets for $flowKey flow key.")
         log.info(s"Got ${newPackets.size} new packets to analyze.")
@@ -290,17 +234,17 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
   def filterIterationResult[A <: IterationResult](iterationResult: A): Future[IterationResult] = {
     iterationResult match {
       case result@InitializingConnection(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        iterationResultHistoryService.create(
+        iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         ).map(rs => ContinueIteration(captured, analyzed))
 
       case result@InitializingRemoveFinePackets(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        iterationResultHistoryService.create(
+        iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         ).map(rs => RemoveFinePackets(captured, analyzed))
 
       case result@SendData(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        iterationResultHistoryService.create(
+        iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         ).map( rs => ContinueIteration(captured, analyzed))
 
@@ -308,11 +252,11 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
         checkForAttack(iterationResult)
 
       case result@InitializingConnectionAndDataTransfer(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        val f_1 = iterationResultHistoryService.create(
+        val f_1 = iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         )
 
-        val f_2 = iterationResultHistoryService.create(
+        val f_2 = iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         )
 
@@ -327,20 +271,20 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
       case iterationResult@PortClosed(captured: Seq[Packet], analyzed: Seq[Packet]) =>
         checkForAttack(iterationResult)
       case iterationResult@SuspiciousNetworkScan(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        iterationResultHistoryService.create(
+        iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         ).map( rs => ContinueIteration(captured, analyzed))
       case iterationResult@RemoveFinePackets(captured: Seq[Packet], analyzed: Seq[Packet]) =>
-        iterationResultHistoryService.create(
+        iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
         ).map( rs => RemoveFinePackets(captured, analyzed))
       case _ => Future(iterationResult)
     }
   }
 
-  def awaitAndCheckForAttack[A <: IterationResult](iterationResult: A) = {
-    val f = Future (
-      Thread.sleep(Constants.ONE_SECOND)
+  def awaitAndCheckForAttack[A <: IterationResult](iterationResult: A): Future[IterationResult] = {
+    Future (
+      Thread.sleep(Constants.ONE_SECOND_MILLIS)
     )
     .flatMap(_ => iterationResult match {
       case _ => packetService.areThereMorePackets(iterationResult.captured.head.flowKey,
@@ -355,12 +299,10 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
         }
       )
     })
-
-    f
   }
 
-  def checkForAttack[A <: IterationResult](iterationResult: A) = {
-    iterationResultHistoryService.create(
+  def checkForAttack[A <: IterationResult](iterationResult: A): Future[IterationResult] = {
+    iterationResultHistoryRepository.create(
       createIterationResultHistory(iterationResult)
     ).flatMap(createResultHistory =>
       checkForAttackWithNeuralNetwork(iterationResult).map(chance => {
@@ -375,32 +317,32 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
 
   def createCheckingContext[A <: IterationResult](sourceAddress: String,
                                                   iterationResult: A): Future[CheckingContext] = {
-    val f = iterationResultHistoryService.findBySourceAddress(sourceAddress).map(result => {
+    val f = iterationResultHistoryRepository.findBySourceAddress(sourceAddress).map(result => {
       val resultTypes = result.groupBy(_.resultType)
 
       val openPortsTypes = resultTypes
-        .filter(entry => ScanDetectionAlgorithm.OPEN_PORTS_COUNTER_LABELS.contains(entry._1))
+        .filter(entry => Constants.OPEN_PORTS_COUNTER_LABELS.contains(entry._1))
         .values.flatten
 
       val numberOfTransportedPacketsToOpenPorts = openPortsTypes
-        .map(_.info.getOrElse(IterationResultHistory.InfoKeys.INFO_KEYS, Constants.ZERO).toInt).sum
+        .map(_.info.getOrElse(IterationResultHistory.InfoKeys.INFO_KEYS, Constants.ZERO_AS_STRING).toInt).sum
 
       val closedPortsTypes = resultTypes
-        .filter(entry => ScanDetectionAlgorithm.CLOSED_PORTS_COUNTER_LABELS.contains(entry._1))
+        .filter(entry => Constants.CLOSED_PORTS_COUNTER_LABELS.contains(entry._1))
         .values.flatten
 
       val hostWasInitializingConnection = resultTypes.values.flatten
-        .exists(ir => ir.resultType == ScanDetectionAlgorithm.IterationResultHistoryLabels.initializingConnection ||
-          ir.resultType == ScanDetectionAlgorithm.IterationResultHistoryLabels.initializingRemoveFinePackets
+        .exists(ir => ir.resultType == Constants.IterationResultHistoryLabels.initializingConnection ||
+          ir.resultType == Constants.IterationResultHistoryLabels.initializingRemoveFinePackets
         )
 
       val sendData = resultTypes.values.flatten
-        .exists(ir => ir.resultType == ScanDetectionAlgorithm.IterationResultHistoryLabels.sendData ||
-          ir.resultType == ScanDetectionAlgorithm.IterationResultHistoryLabels.removeFinePackets ||
-          ir.resultType == ScanDetectionAlgorithm.IterationResultHistoryLabels.initializingRemoveFinePackets
+        .exists(ir => ir.resultType == Constants.IterationResultHistoryLabels.sendData ||
+          ir.resultType == Constants.IterationResultHistoryLabels.removeFinePackets ||
+          ir.resultType == Constants.IterationResultHistoryLabels.initializingRemoveFinePackets
         )
 
-      val didNotSendData = resultTypes.get(ScanDetectionAlgorithm.IterationResultHistoryLabels.didNotSendData)
+      val didNotSendData = resultTypes.get(Constants.IterationResultHistoryLabels.didNotSendData)
         .exists(_ => true)
 
       val closedPorts = closedPortsTypes.map(_.port).toSet
@@ -431,8 +373,8 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
         usedPorts.sliding(2)
           .exists(
             part =>
-              groupedByPort(part.head).contains(ScanDetectionAlgorithm.IterationResultHistoryLabels.didNotSendData) &&
-              groupedByPort(part.last).contains(ScanDetectionAlgorithm.IterationResultHistoryLabels.portClosed)
+              groupedByPort(part.head).contains(Constants.IterationResultHistoryLabels.didNotSendData) &&
+              groupedByPort(part.last).contains(Constants.IterationResultHistoryLabels.portClosed)
           )
       } else {
         false
@@ -467,14 +409,14 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
         } catch {
           case e: Throwable =>
             log.error("Error while getting result from neural network.", e)
-            Constants.Numbers.ZERO
+            Constants.INTEGER_ZERO
         }
         chance
       }
     )
   }
 
-  def createIterationResultHistory[A <: IterationResult](iterationResult: A) = {
+  def createIterationResultHistory[A <: IterationResult](iterationResult: A): IterationResultHistory = {
     IterationResultHistory(
       None,
       getSourceAddress(iterationResult.all),
@@ -494,7 +436,10 @@ class ScanDetectionAlgorithm @Inject() (packetService: PacketService,
         false
       }
     } catch {
-      case ex: Throwable => false
+      case ex: Throwable => {
+        log.error("Exception while checking honeypot", ex)
+        false
+      }
     }
   }
 

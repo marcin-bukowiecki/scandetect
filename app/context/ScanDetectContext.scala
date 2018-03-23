@@ -8,7 +8,7 @@ import models.Settings
 import neuralnetwork.ScanDetectNeuralNetwork
 import org.jnetpcap.{Pcap, PcapIf}
 import play.api.Logger
-import services.{CaptureService, SettingsService}
+import repositories.{CaptureService, SettingsService}
 import utils.Constants.SettingsKeys
 import worker.ScanDetectWorker
 

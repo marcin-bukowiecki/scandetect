@@ -1,9 +1,14 @@
 package utils
 
-/**
-  * Created by Marcin on 2016-09-14.
-  */
+import algorithms._
+
 object Constants {
+
+  val INTEGER_ZERO = 0
+
+  val INTEGER_ONE = 1
+
+  val INTEGER_TWO = 2
 
   val EMPTY_STRING = ""
 
@@ -11,19 +16,56 @@ object Constants {
 
   val INFO_DELIM = "="
 
-  val ZERO = "0"
+  val ZERO_AS_STRING = "0"
 
   val UNKNOWN = "UNKNOWN"
 
-  val NO_HASHCODE = -1L
+  val NO_HASHCODE: Long = -1L
 
   val ICMP_HASHCODE = 3L
 
-  val ONE_SECOND = 1000
+  val ONE_SECOND_MILLIS = 1000
 
   val COLON = ":"
 
-  val INTEGER_ONE = 1
+  val SUPPORTED_INTERNET_PROTOCOLS = Set(
+    Protocols.ICMP,
+    Protocols.ARP,
+    Protocols.IP4,
+    Protocols.IP6
+  )
+
+  val CONNECTION_PROTOCOLS = Set(
+    Protocols.TCP,
+    Protocols.SCTP
+  )
+
+  val SUPPORTED_TRANSPORT_PROTOCOLS = Set(
+    Protocols.TCP,
+    Protocols.UDP,
+    Protocols.SCTP
+  )
+
+  val PORT_SCAN_CONTEXT_LABELS = Set(
+    IterationResultHistoryLabels.didNotSendData,
+    IterationResultHistoryLabels.portClosed,
+    IterationResultHistoryLabels.suspiciousFinScanAttack,
+    IterationResultHistoryLabels.suspiciousAckWinScanAttack,
+    IterationResultHistoryLabels.suspiciousMaimonScanAttack
+  )
+
+  val OPEN_PORTS_COUNTER_LABELS = Set(
+    IterationResultHistoryLabels.sendData,
+    IterationResultHistoryLabels.removeFinePackets,
+    IterationResultHistoryLabels.didNotSendData
+  )
+
+  val CLOSED_PORTS_COUNTER_LABELS = Set(
+    IterationResultHistoryLabels.portClosed,
+    IterationResultHistoryLabels.suspiciousFinScanAttack,
+    IterationResultHistoryLabels.suspiciousAckWinScanAttack,
+    IterationResultHistoryLabels.suspiciousMaimonScanAttack
+  )
 
   object SettingsKeys {
     val DATABASE_URL = "DATABASE_URL"
@@ -36,8 +78,17 @@ object Constants {
     val USE_HONEYPOT = "USE_HONEYPOT"
   }
 
-  object Numbers {
-    val ZERO = 0
+  object IterationResultHistoryLabels {
+    val didNotSendData: String = DidNotSendData.getClass.getName.split("\\$").last
+    val initializingConnection: String = InitializingConnection.getClass.getName.split("\\$").last
+    val sendData: String = SendData.getClass.getName.split("\\$").last
+    val initializingRemoveFinePackets: String = InitializingRemoveFinePackets.getClass.getName.split("\\$").last
+    val portClosed: String = PortClosed.getClass.getName.split("\\$").last
+    val suspiciousNetworkScan: String = SuspiciousNetworkScan.getClass.getName.split("\\$").last
+    val removeFinePackets: String = RemoveFinePackets.getClass.getName.split("\\$").last
+    val suspiciousFinScanAttack: String = SuspiciousFinScanAttack.getClass.getName.split("\\$").last
+    val suspiciousAckWinScanAttack: String = SuspiciousAckWinScanAttack.getClass.getName.split("\\$").last
+    val suspiciousMaimonScanAttack: String = SuspiciousMaimonScanAttack.getClass.getName.split("\\$").last
   }
 
 }

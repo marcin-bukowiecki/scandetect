@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import models.{AnalyzedPacketFilter, Packet}
 import play.api.libs.json.Json
 import play.api.mvc._
-import services.PacketService
+import repositories.PacketRepositoryImpl
 import utils.PortUtils
 
 import scala.concurrent.{Await, Future}
@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Created by Marcin on 2016-12-12.
   */
 @Singleton
-class PacketsController @Inject()(packetService: PacketService) extends Controller {
+class PacketsController @Inject()(packetService: PacketRepositoryImpl) extends Controller {
 
   implicit def packetWrites = Packet.PacketWriter
 

@@ -1,31 +1,53 @@
-package services
+package repositories
 
 import akka.actor.ActorSystem
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import context.MongoDBConnection
 import models.Alert
 import org.joda.time.format.DateTimeFormat
+import play.api.Logger
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, Macros}
-import play.api.Logger
 import utils.ScanAttackTypes
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@ImplementedBy(classOf[AlertRepositoryImpl])
+trait AlertRepository extends BaseRepository {
+
+  def create(alert: Alert): Future[Unit]
+
+  def list(): Future[Seq[Alert]]
+
+  def findBySrcAddressAttackTypeAndScanType(srcAddress: String, scanType: String, attackType: String): Future[Seq[Alert]]
+
+  def list(from: String): Future[Seq[Alert]]
+
+  def setAsRead(alert: Alert): Future[Unit]
+
+  def removeAlert(attackType: String, ipAttacker: String, scanType: String): Future[Unit]
+
+  def getAllAlertsAndGroupThem: Future[Seq[Alert]]
+
+  def removeAlertByIpAndAttackType(ipAttacker: String, attackType: String): Future[Unit]
+
+  def stub(): Future[Seq[Alert]]
+
+}
 
 @Singleton
-class AlertsService @Inject() (val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) {
+class AlertRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) extends AlertRepository {
 
-  val log = Logger
+  private val log = Logger
 
   implicit val alertServiceExecutionContext: ExecutionContext = akkaSystem.dispatchers.lookup("alert-service-context")
 
   implicit def alertReader: BSONDocumentReader[Alert] = Macros.reader[Alert]
   implicit def alertWriter: BSONDocumentWriter[Alert] = Macros.writer[Alert]
 
-  def collection = mongoDBConnection.database.map(_.collection[BSONCollection]("alerts"))
+  def collection: Future[BSONCollection]  = mongoDBConnection.database.map(_.collection[BSONCollection]("alerts"))
 
-  def create(alert: Alert) = {
+  def create(alert: Alert): Future[Unit] = {
     log.info("Creating alert for: " + alert)
     collection.flatMap(_.insert(alert).map(_ => {}))
   }
@@ -60,7 +82,7 @@ class AlertsService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     collection.flatMap(_.find(query).cursor[Alert]().collect[Seq]())
   }
 
-  def setAsRead(alert: Alert) = {
+  def setAsRead(alert: Alert): Future[Unit] = {
     val selector = BSONDocument(
       "_id" -> BSONDocument(
         "$eq" -> alert._id))
@@ -90,7 +112,7 @@ class AlertsService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     collection.flatMap(_.remove(selector).map(_ => {}))
   }
 
-  def getAllAlertsAndGroupThem(): Future[Seq[Alert]] = {
+  def getAllAlertsAndGroupThem: Future[Seq[Alert]] = {
     collection.flatMap(_.find(BSONDocument()).cursor[Alert]().collect[Seq]()).map(alerts => {
       val sortedAlerts = alerts.sortBy(_.time)
 
@@ -137,7 +159,7 @@ class AlertsService @Inject() (val mongoDBConnection: MongoDBConnection, val akk
     collection.flatMap(_.remove(query).map(_ => {}))
   }
 
-  def stub() = {
+  def stub(): Future[Seq[Alert]] = {
     collection.flatMap(_.find(BSONDocument()).cursor[Alert]().collect[Seq](1))
   }
 

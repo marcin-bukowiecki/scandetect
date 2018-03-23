@@ -1,4 +1,4 @@
-package services
+package repositories
 
 import java.lang.StringBuilder
 import java.util
@@ -11,7 +11,7 @@ import org.jnetpcap.{Pcap, PcapIf}
   */
 object Main extends App {
 
-  val cs = new CaptureService(new PacketServiceTester)
+  val cs = new CaptureService(new PacketRepositoryImplTester)
 
   val errbuf = new StringBuilder()
   val snaplen = 64 * 1024 // Capture all packets, no trucation

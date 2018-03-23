@@ -1,4 +1,4 @@
-package services
+package repositories
 
 import akka.actor.ActorSystem
 import com.google.inject.{Inject, Singleton}
@@ -10,18 +10,15 @@ import reactivemongo.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter,
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by Marcin on 2016-12-23.
-  */
 @Singleton
 class HoneypotService @Inject() (val honeypotMongoDBConnection: HoneypotMongoDBConnection,
                                  val akkaSystem: ActorSystem)  {
 
-  val log = Logger
+  private val log = Logger
 
   implicit val honeypotServiceExecutionContext: ExecutionContext = akkaSystem.dispatchers.lookup("honeypot-service-context")
 
-  def collection = honeypotMongoDBConnection.database.map(_.collection[BSONCollection]("iteration_result_history"))
+  def collection: Future[BSONCollection] = honeypotMongoDBConnection.database.map(_.collection[BSONCollection]("iteration_result_history"))
 
   implicit def iterationResultHistoryReader: BSONDocumentReader[IterationResultHistory] = Macros.reader[IterationResultHistory]
   implicit def iterationResultHistoryWriter: BSONDocumentWriter[IterationResultHistory] = Macros.writer[IterationResultHistory]

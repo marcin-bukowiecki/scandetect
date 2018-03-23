@@ -6,23 +6,20 @@ import akka.actor._
 import akka.event.Logging
 import algorithms._
 import models.{Alert, Packet}
-import services.{AlertsService, IterationResultHistoryService}
+import repositories.{AlertRepositoryImpl, IterationResultHistoryRepository, IterationResultHistoryRepositoryImpl}
 import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Breaks._
 
-/**
-  * Created by Marcin on 2016-12-10.
-  */
 object ScanAttackAndTypeDetectorActor {
 
   def props = Props[ScanAttackAndTypeDetectorActor]
 
 }
 
-class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
-                                      iterationResultHistoryService: IterationResultHistoryService) extends Actor {
+class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
+                                      iterationResultHistoryService: IterationResultHistoryRepository) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -262,7 +259,7 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertsService,
 
     val f2 = if (attackType==ScanAttackTypes.AttackType.UDP)
       iterationResultHistoryService.findByResultTypeAndSourceAddress(sourceAddress,
-      ScanDetectionAlgorithm.IterationResultHistoryLabels.sendData).map(_.map(_.port))
+      Constants.IterationResultHistoryLabels.sendData).map(_.map(_.port))
     else Future(Seq())
 
     Future.sequence(Seq(f1, f2)).map(_.flatten.toSet.filter(_ != PortUtils.NO_PORT))

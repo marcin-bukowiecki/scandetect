@@ -2,38 +2,20 @@ package algorithms
 
 import models.Packet
 import utils._
+import Constants._
 
 import scala.math._
 import scala.annotation.switch
 
-/**
-  * Created by Marcin on 2016-10-29.
-  */
 object AlgorithmUtils {
 
-  val SUPPORTED_INTERNET_PROTOCOLS = Set(
-    Protocols.ICMP,
-    Protocols.ARP,
-    Protocols.IP4,
-    Protocols.IP6
-  )
+  val logBase = 2
 
-  val CONNECTION_PROTOCOLS = Set(
-    Protocols.TCP,
-    Protocols.SCTP
-  )
+  def isConnectionProtocol(protocol: String): Boolean = CONNECTION_PROTOCOLS.contains(protocol)
 
-  val SUPPORTED_TRANSPORT_PROTOCOLS = Set(
-    Protocols.TCP,
-    Protocols.UDP,
-    Protocols.SCTP
-  )
+  def isSupportedInternetProtocol(protocol: String): Boolean = SUPPORTED_INTERNET_PROTOCOLS.contains(protocol)
 
-  def isConnectionProtocol(protocol: String) = CONNECTION_PROTOCOLS.contains(protocol)
-
-  def isSupportedInternetProtocol(protocol: String) = SUPPORTED_INTERNET_PROTOCOLS.contains(protocol)
-
-  def isSupportedTransportProtocol(protocol: String) = SUPPORTED_TRANSPORT_PROTOCOLS.contains(protocol)
+  def isSupportedTransportProtocol(protocol: String): Boolean = SUPPORTED_TRANSPORT_PROTOCOLS.contains(protocol)
 
   def isInitializingConnection(protocol: String, packets: Seq[Packet]): Boolean = {
     protocol match {
@@ -268,13 +250,11 @@ object AlgorithmUtils {
     case DidNotSendData(old: Seq[Packet], analyzed: Seq[Packet]) => PortScanAlert(old, analyzed, chance)
   }
 
-  val logBase = 2
-
   def getClosedPortScore(threshold: Int, closedPorts: Int): Double = {
     if (closedPorts <= threshold) {
-      0
+      Constants.INTEGER_ZERO
     } else {
-      ((log(closedPorts - (threshold - 1)) / scala.math.log(logBase)) - 1) / 10
+      ((log(closedPorts - (threshold - Constants.INTEGER_ONE)) / scala.math.log(logBase)) - Constants.INTEGER_ONE) / 10
     }
   }
 

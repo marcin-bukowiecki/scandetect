@@ -2,9 +2,6 @@ package algorithms
 
 import models.Packet
 
-/**
-  * Created by Marcin on 2016-12-29.
-  */
 abstract class IterationResult {
   val captured: Seq[Packet]
   val analyzed: Seq[Packet]

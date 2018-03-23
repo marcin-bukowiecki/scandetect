@@ -2,24 +2,19 @@ package controllers
 
 import com.google.inject.{Inject, Singleton}
 import context.{MongoDBConnection, ScanDetectContext}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.mvc._
-import services.{AlertsService, CaptureService, PacketService}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import reactivemongo.api.DefaultDB
+import repositories.{AlertRepository, AlertRepositoryImpl, CaptureService, PacketRepositoryImpl}
 
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
-/**
-  * Created by Marcin on 2016-09-14.
-  */
 @Singleton
 class IndexController @Inject() (captureService: CaptureService,
                                  scanDetectContext: ScanDetectContext,
-                                 alertsService: AlertsService,
-                                 packetService: PacketService,
+                                 alertRepository: AlertRepository,
+                                 packetService: PacketRepositoryImpl,
                                  mongoDBConnection: MongoDBConnection) extends Controller {
 
   def index() = Action {
@@ -27,7 +22,7 @@ class IndexController @Inject() (captureService: CaptureService,
   }
 
   def isRunning = Action {
-    Ok(JsBoolean(captureService.allowCapturing.get()))
+    Ok(JsBoolean(captureService.isCapturing()))
   }
 
   def startMonitoringPorts = Action {
@@ -57,7 +52,7 @@ class IndexController @Inject() (captureService: CaptureService,
 
   def isDatabaseAvailable = Action {
     try {
-      Await.result(alertsService.stub(), 5 seconds)
+      Await.result(alertRepository.stub(), 5.seconds)
       Ok(JsBoolean(true))
     } catch {
       case x: Throwable => Ok(JsBoolean(false))
@@ -65,11 +60,11 @@ class IndexController @Inject() (captureService: CaptureService,
   }
 
   def getCapturedPacketsCount = Action.async {
-    packetService.getNumberOfPacketsInDatabase().map(number => Ok(JsString(number.toString())))
+    packetService.getNumberOfPacketsInDatabase.map(number => Ok(JsString(String.valueOf(number))))
   }
 
   def getAnalyzedPacketsCount = Action.async {
-    packetService.getNumberOfAnalyzedPacketsInDatabase().map(number => Ok(JsString(number.toString())))
+    packetService.getNumberOfAnalyzedPacketsInDatabase.map(number => Ok(String.valueOf(number)))
   }
 
 }
