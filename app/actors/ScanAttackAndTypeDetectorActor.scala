@@ -6,11 +6,10 @@ import akka.actor._
 import akka.event.Logging
 import algorithms._
 import models.{Alert, Packet}
-import repositories.{AlertRepositoryImpl, IterationResultHistoryRepository, IterationResultHistoryRepositoryImpl}
+import repositories.{AlertRepositoryImpl, IterationResultHistoryRepository}
 import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.Breaks._
 
 object ScanAttackAndTypeDetectorActor {
 
@@ -18,14 +17,14 @@ object ScanAttackAndTypeDetectorActor {
 
 }
 
-class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
-                                      iterationResultHistoryService: IterationResultHistoryRepository) extends Actor {
+class ScanAttackAndTypeDetectorActor(alertsService: AlertRepositoryImpl,
+                                     iterationResultHistoryService: IterationResultHistoryRepository) extends Actor {
 
   val log = Logging(context.system, this)
 
   implicit val executionContext: ExecutionContext = context.system.dispatchers.lookup("software-detect-actor-context")
 
-   override def receive = {
+  override def receive = {
     case attackType@XmasScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
@@ -42,28 +41,28 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
     case attackType@TcpNullScanAttack(old: Seq[Packet], analyzed: Seq[Packet]) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
-        createAlert(
-          ScanAttackTypes.ScanType.PORT_SCAN,
-          ScanAttackTypes.AttackType.TCP_NULL,
-          incomingPacket.sourceAddress,
-          Constants.EMPTY_STRING,
-          AttackSoftwareResolver.attackTypes(ScanAttackTypes.AttackType.TCP_NULL),
-          incomingPacket.destinationPort,
-          100
-        ).map(alert => alertsService.create(alert))
+      createAlert(
+        ScanAttackTypes.ScanType.PORT_SCAN,
+        ScanAttackTypes.AttackType.TCP_NULL,
+        incomingPacket.sourceAddress,
+        Constants.EMPTY_STRING,
+        AttackSoftwareResolver.attackTypes(ScanAttackTypes.AttackType.TCP_NULL),
+        incomingPacket.destinationPort,
+        100
+      ).map(alert => alertsService.create(alert))
 
     case attackType@AckWinScanAttack(old: Seq[Packet], analyzed: Seq[Packet], chance: Int) =>
       val incomingPacket = getIncomingPacket(attackType.all).get
 
-        createAlert(
-          ScanAttackTypes.ScanType.PORT_SCAN,
-          ScanAttackTypes.AttackType.TCP_ACK_WIN,
-          incomingPacket.sourceAddress,
-          Constants.EMPTY_STRING,
-          AttackSoftwareResolver.attackTypes(ScanAttackTypes.AttackType.TCP_ACK_WIN),
-          incomingPacket.destinationPort,
-          100
-        ).map(alert => alertsService.create(alert))
+      createAlert(
+        ScanAttackTypes.ScanType.PORT_SCAN,
+        ScanAttackTypes.AttackType.TCP_ACK_WIN,
+        incomingPacket.sourceAddress,
+        Constants.EMPTY_STRING,
+        AttackSoftwareResolver.attackTypes(ScanAttackTypes.AttackType.TCP_ACK_WIN),
+        incomingPacket.destinationPort,
+        100
+      ).map(alert => alertsService.create(alert))
 
     case alert@PortScanAlert(old: Seq[Packet], analyzed: Seq[Packet], chance: Int) =>
       val incomingPacket = getIncomingPacket(alert.all).get
@@ -99,7 +98,7 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
       val sourceAddress = addressAndPort._1
       val destinationPort = addressAndPort._2
 
-      protocol match  {
+      protocol match {
         case Protocols.TCP =>
           matchTcpProtocolAttackPattern(sourceAddress, destinationPort, networkScanAlert,
             ScanAttackTypes.ScanType.NETWORK_SCAN)
@@ -159,7 +158,6 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
             PortUtils.NO_PORT,
             100
           ).map(alert => alertsService.create(alert))
-
       }
   }
 
@@ -235,16 +233,12 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
   }
 
   def getIncomingPacket(packets: Seq[Packet]): Option[Packet] = {
-    var packet: Option[Packet] = None
-    breakable {
-      for (p <- packets) {
-        if (p.isIncoming) {
-          packet = Some(p)
-          break
-        }
+    for (p <- packets) {
+      if (p.isIncoming) {
+        return Some(p)
       }
     }
-    packet
+    None
   }
 
   def getChance(iterationResult: IterationResult) = {
@@ -257,10 +251,13 @@ class ScanAttackAndTypeDetectorActor (alertsService: AlertRepositoryImpl,
   def getPortScanPorts(attackType: String, sourceAddress: String): Future[Set[Int]] = {
     val f1 = iterationResultHistoryService.getPortScanPorts(sourceAddress)
 
-    val f2 = if (attackType==ScanAttackTypes.AttackType.UDP)
-      iterationResultHistoryService.findByResultTypeAndSourceAddress(sourceAddress,
-      Constants.IterationResultHistoryLabels.sendData).map(_.map(_.port))
-    else Future(Seq())
+    val f2 = if (attackType == ScanAttackTypes.AttackType.UDP) {
+      iterationResultHistoryService
+        .findByResultTypeAndSourceAddress(sourceAddress, Constants.IterationResultHistoryLabels.sendData)
+        .map(_.map(_.port))
+    } else {
+      Future(Seq())
+    }
 
     Future.sequence(Seq(f1, f2)).map(_.flatten.toSet.filter(_ != PortUtils.NO_PORT))
   }

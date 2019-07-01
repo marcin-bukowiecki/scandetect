@@ -18,12 +18,12 @@ libraryDependencies ++= Seq( "org.reactivemongo" % "reactivemongo_2.11" % "0.12.
 
 libraryDependencies ++= Seq( "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.0" % "test" )
 
-libraryDependencies ++= Seq("org.deeplearning4j" % "deeplearning4j-core" % "0.7.1" )
+libraryDependencies ++= Seq("org.deeplearning4j" % "deeplearning4j-core" % "1.0.0-beta4" )
 
-libraryDependencies ++= Seq("org.nd4j" % "nd4j-native-platform" % "0.7.1" )
+libraryDependencies ++= Seq("org.nd4j" % "nd4j-native-platform" % "1.0.0-beta4" )
 
-libraryDependencies ++= Seq("org.datavec" % "datavec-api" % "0.7.1" )
+libraryDependencies ++= Seq("org.datavec" % "datavec-api" % "1.0.0-beta4" )
 
-libraryDependencies ++= Seq("org.nd4j" % "nd4j-backend-impls" % "0.7.1" )
+libraryDependencies ++= Seq("org.nd4j" % "nd4j-backend-impls" % "1.0.0-beta4" )
 
 libraryDependencies ++= Seq("mysql" % "mysql-connector-java" % "6.0.5" )

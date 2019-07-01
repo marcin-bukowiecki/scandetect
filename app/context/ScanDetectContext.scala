@@ -22,11 +22,10 @@ class ScanDetectContext @Inject() (val captureService: CaptureService,
                                    val settingsService: SettingsService,
                                    val honeypotMongoDBConnection: HoneypotMongoDBConnection) {
 
-  val log = Logger
-
+  private val log = Logger
   log.info("Initializing scan detect context.")
 
-  var loadedSettings = Map[String, Any]()
+  private var loadedSettings = Map[String, Any]()
 
   var useAsHoneypot = false
 
@@ -41,7 +40,7 @@ class ScanDetectContext @Inject() (val captureService: CaptureService,
     try {
       Pcap.findAllDevs(devices,  new StringBuilder())
     } catch {
-      case ex: UnsatisfiedLinkError => ex.printStackTrace()
+      case ex: Exception => ex.printStackTrace()
     }
 
     mongoDBConnection.initConnection(this)

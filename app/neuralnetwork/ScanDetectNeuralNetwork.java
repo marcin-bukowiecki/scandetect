@@ -13,10 +13,12 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,25 +56,23 @@ public class ScanDetectNeuralNetwork {
         int numOutputs = 1;
         int nHidden = 10;
         int seed = 123;
-        int iterations = 2000;
         double learningRate = 0.01;
         int nEpochs = 1;
 
         neuralNetwork = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
                 .seed(seed)
-                .iterations(iterations)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .learningRate(learningRate)
+                .updater(new Sgd(learningRate))
                 .weightInit(WeightInit.XAVIER)
-                .updater(Updater.NESTEROVS).momentum(0.9)
+                .updater(Updater.NESTEROVS)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation("tanh")
+                        .activation(Activation.TANH)
                         .build())
                 .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                        .activation("identity")
+                        .activation(Activation.SOFTMAX)
                         .nIn(nHidden).nOut(numOutputs).build())
-                .pretrain(false).backprop(true).build()
+                .build()
         );
         neuralNetwork.init();
         neuralNetwork.setListeners(new ScoreIterationListener(1));
