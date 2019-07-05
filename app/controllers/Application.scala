@@ -31,7 +31,7 @@ class Application @Inject()(packetService: PacketRepositoryImpl,
   }
 
   def socket: WebSocket = WebSocket.accept[JsValue, JsValue] {
-    implicit request  => {
+    implicit request => {
       ActorFlow.actorRef(out => StatisticsWebSocketActor.props(packetService, out))
 
     }

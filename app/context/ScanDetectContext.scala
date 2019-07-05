@@ -16,11 +16,11 @@ import scala.util.control.Breaks._
 import scala.collection.JavaConverters._
 
 @Singleton
-class ScanDetectContext @Inject() (val captureService: CaptureService,
-                                   val scanDetectWorker: ScanDetectWorker,
-                                   val mongoDBConnection: MongoDBConnection,
-                                   val settingsService: SettingsService,
-                                   val honeypotMongoDBConnection: HoneypotMongoDBConnection) {
+class ScanDetectContext @Inject()(val captureService: CaptureService,
+                                  val scanDetectWorker: ScanDetectWorker,
+                                  val mongoDBConnection: MongoDBConnection,
+                                  val settingsService: SettingsService,
+                                  val honeypotMongoDBConnection: HoneypotMongoDBConnection) {
 
   private val log = Logger
   log.info("Initializing scan detect context.")
@@ -38,7 +38,7 @@ class ScanDetectContext @Inject() (val captureService: CaptureService,
     val devices = new util.ArrayList[PcapIf]()
 
     try {
-      Pcap.findAllDevs(devices,  new StringBuilder())
+      Pcap.findAllDevs(devices, new StringBuilder())
     } catch {
       case ex: Exception => ex.printStackTrace()
     }
@@ -59,7 +59,7 @@ class ScanDetectContext @Inject() (val captureService: CaptureService,
     }
 
     try {
-      Pcap.findAllDevs(devices,  new StringBuilder())
+      Pcap.findAllDevs(devices, new StringBuilder())
     } catch {
       case ex: UnsatisfiedLinkError => ex.printStackTrace()
     }
@@ -93,7 +93,7 @@ class ScanDetectContext @Inject() (val captureService: CaptureService,
     val devices = new util.ArrayList[PcapIf]()
 
     try {
-      Pcap.findAllDevs(devices,  new StringBuilder())
+      Pcap.findAllDevs(devices, new StringBuilder())
     } catch {
       case ex: UnsatisfiedLinkError => ex.printStackTrace()
     }

@@ -14,7 +14,7 @@ object PacketData extends BSONHandler[BSONDocument, Map[String, String]] {
   }
 
   override def write(doc: Map[String, String]): BSONDocument = {
-      BSONDocument(doc.map (t => (t._1, BSONString(t._2))))
+    BSONDocument(doc.map(t => (t._1, BSONString(t._2))))
   }
 
 }
@@ -108,19 +108,19 @@ case class Packet(_id: Option[BSONObjectID],
                   length: Int)
 
   extends PacketData(_id: Option[BSONObjectID],
-                    timestamp: Long,
-                    protocol: String,
-                    sourceAddress: String,
-                    sourcePort: Int,
-                    destinationAddress: String,
-                    destinationPort: Int,
-                    info: Map[String, String],
-                    flags: Seq[String],
-                    flowKey: Long,
-                    additionalHash: Long,
-                    additionalHashNetwork: Long,
-                    direction: String,
-                    length: Int) {
+    timestamp: Long,
+    protocol: String,
+    sourceAddress: String,
+    sourcePort: Int,
+    destinationAddress: String,
+    destinationPort: Int,
+    info: Map[String, String],
+    flags: Seq[String],
+    flowKey: Long,
+    additionalHash: Long,
+    additionalHashNetwork: Long,
+    direction: String,
+    length: Int) {
 
 }
 
@@ -153,20 +153,20 @@ object Packet {
 
   implicit object PacketWriter extends OWrites[Packet] {
     override def writes(packet: Packet) = Json.obj(
-        "_id" -> packet._id.get,
-        "timestamp" -> packet.timestamp,
-        "protocol" -> packet.protocol,
-        "sourceAddress" -> packet.sourceAddress,
-        "sourcePort" -> packet.sourcePort,
-        "destinationAddress" -> packet.destinationAddress,
-        "destinationPort" -> packet.destinationPort,
-        "info" -> packet.info,
-        "flags" -> packet.flags,
-        "flowKey" -> packet.flowKey,
-        "additionalHash" -> packet.additionalHash,
-        "additionalHashNetwork" -> packet.additionalHashNetwork,
-        "direction" -> packet.direction,
-        "length" -> packet.length
+      "_id" -> packet._id.get,
+      "timestamp" -> packet.timestamp,
+      "protocol" -> packet.protocol,
+      "sourceAddress" -> packet.sourceAddress,
+      "sourcePort" -> packet.sourcePort,
+      "destinationAddress" -> packet.destinationAddress,
+      "destinationPort" -> packet.destinationPort,
+      "info" -> packet.info,
+      "flags" -> packet.flags,
+      "flowKey" -> packet.flowKey,
+      "additionalHash" -> packet.additionalHash,
+      "additionalHashNetwork" -> packet.additionalHashNetwork,
+      "direction" -> packet.direction,
+      "length" -> packet.length
     )
   }
 

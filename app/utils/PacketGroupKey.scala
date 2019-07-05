@@ -6,7 +6,7 @@ object PacketGroupKey {
 
   def apply(flowKey: Long, additionalHash: Long): PacketGroupKey = new PacketGroupKey(flowKey, additionalHash)
 
-  def apply(packet: Packet):PacketGroupKey = new PacketGroupKey(packet)
+  def apply(packet: Packet): PacketGroupKey = new PacketGroupKey(packet)
 
 }
 

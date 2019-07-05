@@ -6,7 +6,7 @@ import utils.{Constants, NetworkLayerGroupKey, PacketGroupKey, Protocols}
 object ScanDetectionAlgorithmHelper {
 
   def apply(): ScanDetectionAlgorithmHelper = new ScanDetectionAlgorithmHelper()
-  
+
 }
 
 class ScanDetectionAlgorithmHelper {
@@ -23,7 +23,6 @@ class ScanDetectionAlgorithmHelper {
   }
 
   def groupPacketsByFlowKeyAndAdditionalHash(packets: Seq[Packet]): Map[PacketGroupKey, Seq[Packet]] = packets.sortBy(_.timestamp).groupBy(p => PacketGroupKey(p))
-
 
 
 }

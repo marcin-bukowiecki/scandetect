@@ -18,7 +18,7 @@ class SettingsController @Inject()(settingsService: SettingsService,
                                    iterationResultHistoryService: IterationResultHistoryRepositoryImpl) extends Controller {
 
   def loadSettings = Action {
-    if(settingsService.validateSettings()) {
+    if (settingsService.validateSettings()) {
       Ok(Json.toJson(
         settingsService.loadSettings()
       ))

@@ -42,13 +42,13 @@ public class ScanDetectNeuralNetwork {
 
         int numLinesToSkip = 0;
         String delimiter = ",";
-        RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
+        RecordReader recordReader = new CSVRecordReader(numLinesToSkip, delimiter);
         recordReader.initialize(new FileSplit(new ClassPathResource("learning_data.txt").getFile()));
 
         int labelIndex = 7;
         int batchSize = 150;
 
-        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex, labelIndex, true);
+        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader, batchSize, labelIndex, labelIndex, true);
         DataSet allData = iterator.next();
         allData.shuffle();
 
@@ -77,24 +77,24 @@ public class ScanDetectNeuralNetwork {
         neuralNetwork.init();
         neuralNetwork.setListeners(new ScoreIterationListener(1));
 
-        for( int i=0; i<nEpochs; i++ ){
+        for (int i = 0; i < nEpochs; i++) {
             iterator.reset();
             neuralNetwork.fit(iterator);
         }
 
-        INDArray input = Nd4j.create(new double[] {1,1,1,1,0,0,0});
+        INDArray input = Nd4j.create(new double[]{1, 1, 1, 1, 0, 0, 0});
         INDArray out = neuralNetwork.output(input, false);
         System.out.println(out);
-        input = Nd4j.create(new double[] {3,1,1,2,1,0,0.10});
+        input = Nd4j.create(new double[]{3, 1, 1, 2, 1, 0, 0.10});
         out = neuralNetwork.output(input, false);
         System.out.println(out);
-        input = Nd4j.create(new double[] {3,2,1,3,1,1,1});
+        input = Nd4j.create(new double[]{3, 2, 1, 3, 1, 1, 1});
         out = neuralNetwork.output(input, false);
         System.out.println(out);
-        input = Nd4j.create(new double[] {3,2,1,3,1,1,1});
+        input = Nd4j.create(new double[]{3, 2, 1, 3, 1, 1, 1});
         out = neuralNetwork.output(input, false);
         System.out.println(out);
-        input = Nd4j.create(new double[] {3,1,1,2,1,0,0.60});
+        input = Nd4j.create(new double[]{3, 1, 1, 2, 1, 0, 0.60});
         out = neuralNetwork.output(input, false);
         System.out.println(out);
     }

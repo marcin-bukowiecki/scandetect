@@ -43,9 +43,10 @@ class AlertRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, va
   implicit val alertServiceExecutionContext: ExecutionContext = akkaSystem.dispatchers.lookup("alert-service-context")
 
   implicit def alertReader: BSONDocumentReader[Alert] = Macros.reader[Alert]
+
   implicit def alertWriter: BSONDocumentWriter[Alert] = Macros.writer[Alert]
 
-  def collection: Future[BSONCollection]  = mongoDBConnection.database.map(_.collection[BSONCollection]("alerts"))
+  def collection: Future[BSONCollection] = mongoDBConnection.database.map(_.collection[BSONCollection]("alerts"))
 
   def create(alert: Alert): Future[Unit] = {
     log.info("Creating alert for: " + alert)
@@ -58,13 +59,13 @@ class AlertRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, va
 
   def findBySrcAddressAttackTypeAndScanType(srcAddress: String, scanType: String, attackType: String): Future[Seq[Alert]] = {
     val query = BSONDocument(
-      "ipAttacker" -> BSONDocument (
+      "ipAttacker" -> BSONDocument(
         "$eq" -> srcAddress
       ),
-      "scanType" -> BSONDocument (
+      "scanType" -> BSONDocument(
         "$eq" -> scanType
       ),
-      "attackType" -> BSONDocument (
+      "attackType" -> BSONDocument(
         "$eq" -> attackType
       )
     )

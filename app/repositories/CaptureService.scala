@@ -18,7 +18,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CaptureService @Inject() (val packetService: PacketRepositoryImpl) {
+class CaptureService @Inject()(val packetService: PacketRepositoryImpl) {
 
   private val log = Logger
 
@@ -60,7 +60,7 @@ class CaptureService @Inject() (val packetService: PacketRepositoryImpl) {
 
   def stopCapturing(): Unit = capturing.set(false)
 
-  def startCapturing(networkInterface: PcapIf) : Unit = {
+  def startCapturing(networkInterface: PcapIf): Unit = {
     capturing.set(true)
     log.info(networkInterface.getAddresses.asScala.toString())
     Future.apply(startCapturingPackets(networkInterface))
@@ -93,7 +93,7 @@ class CaptureService @Inject() (val packetService: PacketRepositoryImpl) {
         }
       }
     } catch {
-      case e : Throwable => log.error("got error", e)
+      case e: Throwable => log.error("got error", e)
     }
   }
 

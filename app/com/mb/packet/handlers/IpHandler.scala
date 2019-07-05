@@ -9,7 +9,7 @@ import utils._
 object IpHandler {
 
   def apply(networkInterfacesAddresses: Set[String]): IpHandler = new IpHandler(networkInterfacesAddresses)
-  
+
 }
 
 class IpHandler(networkInterfacesAddresses: Set[String]) extends BaseHandler {

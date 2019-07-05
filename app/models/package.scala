@@ -15,7 +15,7 @@ package object models {
     def reads(json: JsValue): JsResult[BSONObjectID] = json match {
       case JsString(x) => {
         val maybeOID: Try[BSONObjectID] = BSONObjectID.parse(x)
-        if(maybeOID.isSuccess) JsSuccess(maybeOID.get) else {
+        if (maybeOID.isSuccess) JsSuccess(maybeOID.get) else {
           JsError("Expected BSONObjectID as JsString")
         }
       }

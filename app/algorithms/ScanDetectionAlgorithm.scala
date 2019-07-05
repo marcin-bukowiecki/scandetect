@@ -20,19 +20,25 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait Algorithm {
   def detect(worker: ScanDetectWorker, packets: Seq[Packet]): Future[Unit]
+
   def fetchPacketsFromThisConnection(flowKey: Long): Future[Seq[Packet]]
+
   def filterIterationResult[A <: IterationResult](iterationResult: A): Future[IterationResult]
+
   def checkForAttack[A <: IterationResult](iterationResult: A)(old: Seq[Packet], analyzed: Seq[Packet])
+
   def createCheckingContext[A <: IterationResult](sourceAddress: String, iterationResult: A): Future[CheckingContext]
+
   def checkForAttackWithNeuralNetwork[A <: IterationResult](iterationResult: A): Future[String]
+
   def createIterationResultHistory[A <: IterationResult](iterationResult: A)
 }
 
 @Singleton
-class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
-                                        val iterationResultHistoryRepository: IterationResultHistoryRepository,
-                                        val honeypotService: HoneypotService,
-                                        val akkaSystem: ActorSystem) {
+class ScanDetectionAlgorithm @Inject()(val packetService: PacketRepositoryImpl,
+                                       val iterationResultHistoryRepository: IterationResultHistoryRepository,
+                                       val honeypotService: HoneypotService,
+                                       val akkaSystem: ActorSystem) {
 
   private val helper = ScanDetectionAlgorithmHelper()
 
@@ -53,10 +59,10 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
 
     val iterationResult: Future[Iterable[IterationResult]] = Future.sequence(groupedByFlowKey.map(entry => {
       val f = Future {
-        val flowKey : Long = entry._1.flowKey
+        val flowKey: Long = entry._1.flowKey
         val protocol = entry._2.head.protocol
-        val additionalHash : Long = entry._1.additionalHash
-        val additionalHashNetwork : Long = entry._1.additionalNetworkLayerHash
+        val additionalHash: Long = entry._1.additionalHash
+        val additionalHashNetwork: Long = entry._1.additionalNetworkLayerHash
         val newPackets = entry._2 ++ (if (protocol == Protocols.ICMP) {
           groupByForNetworkLayer.getOrElse(PacketGroupKey(flowKey, additionalHashNetwork), Seq())
             .filter(_.isUdp)
@@ -93,90 +99,90 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
           SuspiciousNetworkScan(newPackets, analyzed)
         } else if (isSupportedTransportProtocol(protocol)) {
 
-            if (isConnectionProtocol(protocol)) {
-              if (tcpPacketWithoutAnyFlag(protocol, packetsToAnalyze)) {
-                log.info(s"TCP NULL scan attack from $sourceAddress.")
-                TcpNullScanAttack(newPackets, analyzed)
+          if (isConnectionProtocol(protocol)) {
+            if (tcpPacketWithoutAnyFlag(protocol, packetsToAnalyze)) {
+              log.info(s"TCP NULL scan attack from $sourceAddress.")
+              TcpNullScanAttack(newPackets, analyzed)
 
-              } else if (isAckWinScan(protocol, packetsToAnalyze)) {
-                log.info(s"ACK/WIN scan attack from $sourceAddress. Port scan alarm.")
-                AckWinScanAttack(newPackets, analyzed, 100) //100% szansy
+            } else if (isAckWinScan(protocol, packetsToAnalyze)) {
+              log.info(s"ACK/WIN scan attack from $sourceAddress. Port scan alarm.")
+              AckWinScanAttack(newPackets, analyzed, 100) //100% szansy
 
-              } else if (isSuspiciousAckWinScan(protocol, packetsToAnalyze)) {
-                log.info(s"Suspicious ACK/WIN scan attack from $sourceAddress.")
-                SuspiciousAckWinScanAttack(newPackets, analyzed)
+            } else if (isSuspiciousAckWinScan(protocol, packetsToAnalyze)) {
+              log.info(s"Suspicious ACK/WIN scan attack from $sourceAddress.")
+              SuspiciousAckWinScanAttack(newPackets, analyzed)
 
-              } else if (isXmasAttack(protocol, packetsToAnalyze)) {
-                log.info(s"Xmas scan attack from $sourceAddress.")
-                XmasScanAttack(newPackets, analyzed)
+            } else if (isXmasAttack(protocol, packetsToAnalyze)) {
+              log.info(s"Xmas scan attack from $sourceAddress.")
+              XmasScanAttack(newPackets, analyzed)
 
-              } else if (isInitializingConnection(protocol, packetsToAnalyze) &&
-                !isConnectionClosed(protocol, packetsToAnalyze)) {
+            } else if (isInitializingConnection(protocol, packetsToAnalyze) &&
+              !isConnectionClosed(protocol, packetsToAnalyze)) {
 
-                log.info(s"Initialized connection")
-                if (didSendAnyData(protocol, packetsToAnalyze)) {
-                  InitializingConnectionAndDataTransfer(newPackets, analyzed)
-                } else {
-                  InitializingConnection(newPackets, analyzed)
-                }
-
-              } else if (isPortClosed(protocol, packetsToAnalyze)) {
-                log.info(s"$sourceAddress tried to connect to an closed port.")
-                PortClosed(newPackets, analyzed)
-
-              } else if (!didSendAnyData(protocol, packetsToAnalyze) &&
-                isConnectionClosed(protocol, packetsToAnalyze) &&
-                wasNotProperlyFinished(protocol, packetsToAnalyze) &&
-                (lastIsIncoming(protocol, packetsToAnalyze) || packetsToAnalyze.last.containsOnlyRstFlag ||
-                  packetsToAnalyze.last.containsOnlyRstAckFLags)) {
-
-                log.info(s"$sourceAddress connected to a port, did not send any data and connection was not properly " +
-                  s"finished.")
-                DidNotSendData(newPackets, analyzed)
-
-              } else if (didSendAnyData(protocol, packetsToAnalyze) && isConnectionClosed(protocol, packetsToAnalyze)) {
-                log.info(s"Removing ${packetsToAnalyze.size} fine packets")
-                if (isInitializingConnection(protocol, packetsToAnalyze)) {
-                  InitializingRemoveFinePackets(newPackets, analyzed)
-                } else {
-                  RemoveFinePackets(newPackets, analyzed)
-                }
-
-              } else if (isMaimonAttack(protocol, packetsToAnalyze)) {
-                log.info(s"Maimon scan attack from $sourceAddress.")
-                MaimonScanAttack(newPackets, analyzed, 100)
-
-              } else if (isSuspiciousMaimonAttack(protocol, packetsToAnalyze)) {
-                log.info(s"Suspicious Maimon scan attack from $sourceAddress.")
-                SuspiciousMaimonScanAttack(newPackets, analyzed)
-
-              } else if (isFinAttack(protocol, packetsToAnalyze)) {
-                log.info(s"FIN scan attack from $sourceAddress.")
-                FinScanAttack(newPackets, analyzed, 100)
-
-              } else if (isSuspiciousFinAttack(protocol, packetsToAnalyze)) {
-                log.info(s"Suspicious FIN scan attack from $sourceAddress.")
-                SuspiciousFinScanAttack(newPackets, analyzed)
-
+              log.info(s"Initialized connection")
+              if (didSendAnyData(protocol, packetsToAnalyze)) {
+                InitializingConnectionAndDataTransfer(newPackets, analyzed)
               } else {
-                ContinueIteration(newPackets, analyzed)
+                InitializingConnection(newPackets, analyzed)
               }
-            } else {
-              if (isPortClosed(protocol, packetsToAnalyze)) {
-                PortClosed(newPackets, analyzed)
+
+            } else if (isPortClosed(protocol, packetsToAnalyze)) {
+              log.info(s"$sourceAddress tried to connect to an closed port.")
+              PortClosed(newPackets, analyzed)
+
+            } else if (!didSendAnyData(protocol, packetsToAnalyze) &&
+              isConnectionClosed(protocol, packetsToAnalyze) &&
+              wasNotProperlyFinished(protocol, packetsToAnalyze) &&
+              (lastIsIncoming(protocol, packetsToAnalyze) || packetsToAnalyze.last.containsOnlyRstFlag ||
+                packetsToAnalyze.last.containsOnlyRstAckFLags)) {
+
+              log.info(s"$sourceAddress connected to a port, did not send any data and connection was not properly " +
+                s"finished.")
+              DidNotSendData(newPackets, analyzed)
+
+            } else if (didSendAnyData(protocol, packetsToAnalyze) && isConnectionClosed(protocol, packetsToAnalyze)) {
+              log.info(s"Removing ${packetsToAnalyze.size} fine packets")
+              if (isInitializingConnection(protocol, packetsToAnalyze)) {
+                InitializingRemoveFinePackets(newPackets, analyzed)
               } else {
-                if (didSendAnyData(protocol, packetsToAnalyze)) {
-                  SendData(newPackets, analyzed)
-                } else {
-                  DidNotSendData(newPackets, analyzed)
-                }
+                RemoveFinePackets(newPackets, analyzed)
+              }
+
+            } else if (isMaimonAttack(protocol, packetsToAnalyze)) {
+              log.info(s"Maimon scan attack from $sourceAddress.")
+              MaimonScanAttack(newPackets, analyzed, 100)
+
+            } else if (isSuspiciousMaimonAttack(protocol, packetsToAnalyze)) {
+              log.info(s"Suspicious Maimon scan attack from $sourceAddress.")
+              SuspiciousMaimonScanAttack(newPackets, analyzed)
+
+            } else if (isFinAttack(protocol, packetsToAnalyze)) {
+              log.info(s"FIN scan attack from $sourceAddress.")
+              FinScanAttack(newPackets, analyzed, 100)
+
+            } else if (isSuspiciousFinAttack(protocol, packetsToAnalyze)) {
+              log.info(s"Suspicious FIN scan attack from $sourceAddress.")
+              SuspiciousFinScanAttack(newPackets, analyzed)
+
+            } else {
+              ContinueIteration(newPackets, analyzed)
+            }
+          } else {
+            if (isPortClosed(protocol, packetsToAnalyze)) {
+              PortClosed(newPackets, analyzed)
+            } else {
+              if (didSendAnyData(protocol, packetsToAnalyze)) {
+                SendData(newPackets, analyzed)
+              } else {
+                DidNotSendData(newPackets, analyzed)
               }
             }
+          }
         } else {
           ContinueIteration(newPackets, analyzed)
         }
       }
-      f.onFailure{case e: Throwable => e.printStackTrace()}
+      f.onFailure { case e: Throwable => e.printStackTrace() }
       f
     }
     ))
@@ -209,7 +215,7 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
         alerts
       } else {
         Seq()
-    }
+      }
     }).toSeq
 
     iterationResult.map(rs => filterIterationResult(rs).map(x => worker.dispatch(x)))
@@ -218,10 +224,10 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
   def fetchPacketsFromThisConnection(protocol: String, flowKey: Long, additionalHash: Long): Future[Seq[Packet]] = {
     if (protocol == Protocols.UDP) {
       packetService.getAssociatedWithFlowKeyAndProtocol(flowKey, Protocols.ICMP)
-        .flatMap(result => packetService.getAssociatedWithFlowKey(flowKey, additionalHash).map(rs => rs++result))
+        .flatMap(result => packetService.getAssociatedWithFlowKey(flowKey, additionalHash).map(rs => rs ++ result))
     } else if (protocol == Protocols.ICMP) {
       packetService.getAssociatedWithFlowKeyAndProtocol(flowKey, Protocols.UDP)
-        .flatMap(result => packetService.getAssociatedWithFlowKey(flowKey, additionalHash).map(rs => rs++result))
+        .flatMap(result => packetService.getAssociatedWithFlowKey(flowKey, additionalHash).map(rs => rs ++ result))
     } else {
       fetchPacketsFromThisConnection(flowKey, additionalHash)
     }
@@ -246,7 +252,7 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
       case result@SendData(captured: Seq[Packet], analyzed: Seq[Packet]) =>
         iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
-        ).map( rs => ContinueIteration(captured, analyzed))
+        ).map(rs => ContinueIteration(captured, analyzed))
 
       case result@DidNotSendData(captured: Seq[Packet], analyzed: Seq[Packet]) =>
         checkForAttack(iterationResult)
@@ -273,32 +279,32 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
       case iterationResult@SuspiciousNetworkScan(captured: Seq[Packet], analyzed: Seq[Packet]) =>
         iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
-        ).map( rs => ContinueIteration(captured, analyzed))
+        ).map(rs => ContinueIteration(captured, analyzed))
       case iterationResult@RemoveFinePackets(captured: Seq[Packet], analyzed: Seq[Packet]) =>
         iterationResultHistoryRepository.create(
           createIterationResultHistory(iterationResult)
-        ).map( rs => RemoveFinePackets(captured, analyzed))
+        ).map(rs => RemoveFinePackets(captured, analyzed))
       case _ => Future(iterationResult)
     }
   }
 
   def awaitAndCheckForAttack[A <: IterationResult](iterationResult: A): Future[IterationResult] = {
-    Future (
+    Future(
       Thread.sleep(Constants.ONE_SECOND_MILLIS)
     )
-    .flatMap(_ => iterationResult match {
-      case _ => packetService.areThereMorePackets(iterationResult.captured.head.flowKey,
-        iterationResult.captured.head.additionalHash).flatMap(result =>
+      .flatMap(_ => iterationResult match {
+        case _ => packetService.areThereMorePackets(iterationResult.captured.head.flowKey,
+          iterationResult.captured.head.additionalHash).flatMap(result =>
 
-        if (result) {
-          Future{
-            ContinueIteration(iterationResult.captured, iterationResult.analyzed)
+          if (result) {
+            Future {
+              ContinueIteration(iterationResult.captured, iterationResult.analyzed)
+            }
+          } else {
+            checkForAttack(iterationResult)
           }
-        } else {
-          checkForAttack(iterationResult)
-        }
-      )
-    })
+        )
+      })
   }
 
   def checkForAttack[A <: IterationResult](iterationResult: A): Future[IterationResult] = {
@@ -374,7 +380,7 @@ class ScanDetectionAlgorithm @Inject() (val packetService: PacketRepositoryImpl,
           .exists(
             part =>
               groupedByPort(part.head).contains(Constants.IterationResultHistoryLabels.didNotSendData) &&
-              groupedByPort(part.last).contains(Constants.IterationResultHistoryLabels.portClosed)
+                groupedByPort(part.last).contains(Constants.IterationResultHistoryLabels.portClosed)
           )
       } else {
         false

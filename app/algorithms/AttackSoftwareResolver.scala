@@ -78,14 +78,14 @@ object AttackSoftwareResolver {
       case Protocols.TCP =>
         attackType match {
           case ScanAttackTypes.AttackType.TCP_SYN =>
-            val software  = attackTypes(ScanAttackTypes.AttackType.TCP_SYN)
+            val software = attackTypes(ScanAttackTypes.AttackType.TCP_SYN)
             if (software.size == 1) {
               software
             } else {
               tryToResolveMultipleSoftware(Protocols.TCP, packets, software)
             }
           case ScanAttackTypes.AttackType.TCP_CONNECT =>
-            val software  = attackTypes(ScanAttackTypes.AttackType.TCP_CONNECT)
+            val software = attackTypes(ScanAttackTypes.AttackType.TCP_CONNECT)
             if (software.size == 1) {
               software
             } else {
@@ -100,14 +100,14 @@ object AttackSoftwareResolver {
   def resolve(packets: Seq[Packet]): Set[String] = {
     packets.head.protocol match {
       case Protocols.UDP =>
-        val software  = attackTypes(ScanAttackTypes.AttackType.UDP)
+        val software = attackTypes(ScanAttackTypes.AttackType.UDP)
         if (software.size == 1) {
           software
         } else {
           tryToResolveMultipleSoftware(Protocols.UDP, packets, software)
         }
       case Protocols.ICMP =>
-        val software  = attackTypes(ScanAttackTypes.AttackType.ICMP)
+        val software = attackTypes(ScanAttackTypes.AttackType.ICMP)
         if (software.size == 1) {
           software
         } else {

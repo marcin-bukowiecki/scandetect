@@ -109,10 +109,10 @@ object AlgorithmUtils {
     case Protocols.TCP =>
       packets.size == 2
       packets.head.isIncoming &&
-      packets.head.containsOnlyAckFlag &&
-      packets.head.info(PacketInfo.Tcp.SEQ) == "0" &&
-      packets.last.containsOnlyRstFlag &&
-      getTimeBetweenCapturedPackets(packets.head, packets.last) <= AttackPatterns.TIME_FRAMES_BETWEEN_PACKETS(ScanAttackTypes.AttackType.TCP_ACK)
+        packets.head.containsOnlyAckFlag &&
+        packets.head.info(PacketInfo.Tcp.SEQ) == "0" &&
+        packets.last.containsOnlyRstFlag &&
+        getTimeBetweenCapturedPackets(packets.head, packets.last) <= AttackPatterns.TIME_FRAMES_BETWEEN_PACKETS(ScanAttackTypes.AttackType.TCP_ACK)
     case _ => false
   }
 
@@ -120,10 +120,10 @@ object AlgorithmUtils {
     case Protocols.TCP =>
       packets.size == 2
       packets.head.isIncoming &&
-      packets.head.containsOnlyAckFlag &&
-      packets.last.containsOnlyRstFlag &&
-      getTimeBetweenCapturedPackets(packets.head, packets.last) <=
-        AttackPatterns.TIME_FRAMES_BETWEEN_PACKETS(ScanAttackTypes.AttackType.TCP_ACK)
+        packets.head.containsOnlyAckFlag &&
+        packets.last.containsOnlyRstFlag &&
+        getTimeBetweenCapturedPackets(packets.head, packets.last) <=
+          AttackPatterns.TIME_FRAMES_BETWEEN_PACKETS(ScanAttackTypes.AttackType.TCP_ACK)
     case _ => false
   }
 
@@ -176,15 +176,15 @@ object AlgorithmUtils {
     protocol match {
       case Protocols.TCP =>
         packets.size == 2 &&
-        packets.head.isIncoming &&
-        packets.head.containsOnlyFinFlag &&
-        packets.head.info(PacketInfo.Tcp.SEQ) == "1" &&
-        packets.head.info(PacketInfo.Tcp.WIN) == "1024"
+          packets.head.isIncoming &&
+          packets.head.containsOnlyFinFlag &&
+          packets.head.info(PacketInfo.Tcp.SEQ) == "1" &&
+          packets.head.info(PacketInfo.Tcp.WIN) == "1024"
         packets.last.containsOnlyRstAckFLags &&
-        packets.last.info(PacketInfo.Tcp.SEQ) == "1" &&
-        packets.last.checksumIsNotCorrect &&
-        packets.last.info(PacketInfo.Tcp.WIN) == "0" &&
-        (Integer.valueOf(packets.last.info(PacketInfo.Tcp.ACK)) == Integer.valueOf(packets.head.info(PacketInfo.Tcp.SEQ) + 1))
+          packets.last.info(PacketInfo.Tcp.SEQ) == "1" &&
+          packets.last.checksumIsNotCorrect &&
+          packets.last.info(PacketInfo.Tcp.WIN) == "0" &&
+          (Integer.valueOf(packets.last.info(PacketInfo.Tcp.ACK)) == Integer.valueOf(packets.head.info(PacketInfo.Tcp.SEQ) + 1))
       case _ => false
     }
   }
@@ -193,10 +193,10 @@ object AlgorithmUtils {
     protocol match {
       case Protocols.TCP =>
         packets.size == 2 &&
-        packets.head.isIncoming &&
-        packets.head.containsOnlyFinFlag &&
-        packets.last.containsOnlyRstAckFLags &&
-        (Integer.valueOf(packets.last.info(PacketInfo.Tcp.ACK)) == Integer.valueOf(packets.head.info(PacketInfo.Tcp.SEQ) + 1))
+          packets.head.isIncoming &&
+          packets.head.containsOnlyFinFlag &&
+          packets.last.containsOnlyRstAckFLags &&
+          (Integer.valueOf(packets.last.info(PacketInfo.Tcp.ACK)) == Integer.valueOf(packets.head.info(PacketInfo.Tcp.SEQ) + 1))
       case _ => false
     }
   }

@@ -1,4 +1,5 @@
 package com.mb.packet.handlers
+
 import models.Packet
 import org.jnetpcap.packet.PcapPacket
 import org.jnetpcap.protocol.network.{Ip4, Ip6}
@@ -34,12 +35,12 @@ class TcpHandler(networkInterfacesAddresses: Set[String], tcp: Tcp) extends Base
       destinationAddress,
       destinationPort,
       Map(
-        PacketInfo.Tcp.SEQ->tcp.seq().toString,
-        PacketInfo.Tcp.ACK->tcp.ack().toString,
-        PacketInfo.Tcp.WIN->tcp.window().toString,
-        PacketInfo.Tcp.WIN_SCALE->tcp.windowScaled().toString,
-        PacketInfo.Tcp.CHECKSUM_CORRECT->String.valueOf(tcp.isChecksumValid),
-        PacketInfo.Tcp.HEADER_LENGTH->tcp.getHeaderLength.toString
+        PacketInfo.Tcp.SEQ -> tcp.seq().toString,
+        PacketInfo.Tcp.ACK -> tcp.ack().toString,
+        PacketInfo.Tcp.WIN -> tcp.window().toString,
+        PacketInfo.Tcp.WIN_SCALE -> tcp.windowScaled().toString,
+        PacketInfo.Tcp.CHECKSUM_CORRECT -> String.valueOf(tcp.isChecksumValid),
+        PacketInfo.Tcp.HEADER_LENGTH -> tcp.getHeaderLength.toString
       ),
       tcp.flagsEnum().asScala.toSeq.map(flag => flag.name()),
       PacketUtils.generateAdditionalHashcode(sourcePort, destinationPort, direction),

@@ -35,7 +35,7 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
 
     if (sortedAllPorts.size > 1) {
       sortedAllPorts.sliding(2)
-        .map(twoPackets => if((twoPackets.head + 1) == twoPackets.last) 1 else 0)
+        .map(twoPackets => if ((twoPackets.head + 1) == twoPackets.last) 1 else 0)
         .sum.toDouble / sortedAllPorts.size.toDouble
     } else {
       0
@@ -59,13 +59,13 @@ class CheckingContext(val hostWasInitializingConnection: Boolean,
 object CheckingContext {
 
   def apply(hostWasInitializingConnection: Boolean,
-          sendData: Boolean,
-          didNotSendData: Boolean,
-          triedConnectToClosedPortAfterOpen: Boolean,
-          closedPortsThresholdResult: CheckingContext.ThresholdResult,
-          numberOfTransportedPacketsToOpenPorts: Int,
-          usedClosedPorts: Set[Int],
-          usedOpenPorts: Set[Int]): CheckingContext = {
+            sendData: Boolean,
+            didNotSendData: Boolean,
+            triedConnectToClosedPortAfterOpen: Boolean,
+            closedPortsThresholdResult: CheckingContext.ThresholdResult,
+            numberOfTransportedPacketsToOpenPorts: Int,
+            usedClosedPorts: Set[Int],
+            usedOpenPorts: Set[Int]): CheckingContext = {
 
     new CheckingContext(hostWasInitializingConnection,
       sendData,
@@ -81,8 +81,11 @@ object CheckingContext {
     val address: String
     val threshold: Int
   }
+
   case class AtThreshold(address: String, threshold: Int) extends ThresholdResult
+
   case class UnderThreshold(address: String, threshold: Int) extends ThresholdResult
+
   case class BeyondThreshold(address: String, threshold: Int) extends ThresholdResult
 
 }

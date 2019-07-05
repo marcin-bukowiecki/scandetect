@@ -15,7 +15,7 @@ object IterationResultInfo extends BSONHandler[BSONDocument, Map[String, String]
   }
 
   override def write(doc: Map[String, String]): BSONDocument = {
-    BSONDocument(doc.map (t => (t._1, BSONString(t._2))))
+    BSONDocument(doc.map(t => (t._1, BSONString(t._2))))
   }
 
 }

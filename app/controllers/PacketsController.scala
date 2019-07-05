@@ -48,9 +48,9 @@ class PacketsController @Inject()(packetService: PacketRepositoryImpl) extends C
         val packetFilter = AnalyzedPacketFilter(protocol.split(","), sourceAddress, destinationAddress, sourcePort, destinationPort, length)
 
         val list = Await.result(packetService.filterPackets(packetFilter), 10.seconds)
-        val offset = (currentPage -1) * 20
+        val offset = (currentPage - 1) * 20
         val limit = offset + 20
-        val jsArray =  Json.toJson(list.slice(offset, limit))
+        val jsArray = Json.toJson(list.slice(offset, limit))
 
         Ok(Json.obj("packets" -> jsArray, "numberOfPackets" -> list.size))
       }.getOrElse {

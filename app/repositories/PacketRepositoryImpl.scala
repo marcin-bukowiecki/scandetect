@@ -15,12 +15,19 @@ import scala.concurrent.{ExecutionContext, Future}
 trait PacketRepository[T] {
 
   def create(packet: T): Future[Unit]
+
   def getAssociatedWithFlowKey(flowKey: Long, additionalHash: Long): Future[Seq[T]]
+
   def getToAnalyze(limit: Int): Future[Seq[T]]
+
   def removeMultiple(packetsToRemove: Seq[T]): Future[WriteResult]
+
   def markAsAnalyzed(packets: Seq[T]): Future[MultiBulkWriteResult]
+
   def markAsAnalyzedAndRemoveOld(packets: Seq[T]): Future[Unit]
+
   def removeByFlowKey(flowKey: Long): Future[WriteResult]
+
   def getAssociatedWithFlowKeyAndProtocol(flowKey: Long, protocol: String): Future[Seq[T]]
 }
 
@@ -30,17 +37,20 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
   implicit val myExecutionContext: ExecutionContext = akkaSystem.dispatchers.lookup("packet-service-context")
 
   implicit def packetReader: BSONDocumentReader[Packet] = Macros.reader[Packet]
+
   implicit def packetWriter: BSONDocumentWriter[Packet] = Macros.writer[Packet]
 
   implicit def infoMapReader: BSONHandler[BSONDocument, Map[String, String]] = PacketData
+
   implicit def idReader: BSONHandler[BSONObjectID, Option[BSONObjectID]] = IdReader
 
   def packetsCollection: Future[BSONCollection] = mongoDBConnection.database.map(_.collection[BSONCollection]("capturedPackets"))
+
   def analyzedPacketsCollection: Future[BSONCollection] = mongoDBConnection.database.map(_.collection[BSONCollection]("analyzedPackets"))
 
   def create(packet: Packet): Future[Unit] = {
     val f = packetsCollection.flatMap(_.insert(packet).map(_ => {}))
-    f.onFailure{case rs =>
+    f.onFailure { case rs =>
       rs.printStackTrace()
       create(packet)
     }
@@ -49,15 +59,15 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
 
   def getAssociatedWithFlowKey(flowKey: Long, additionalHash: Long): Future[Seq[Packet]] = {
     val query = BSONDocument(
-        "flowKey" -> BSONDocument
-        (
-          "$eq" -> flowKey
-        ),
-        "additionalHash" -> BSONDocument
-        (
-          "$eq" -> additionalHash
-        )
+      "flowKey" -> BSONDocument
+      (
+        "$eq" -> flowKey
+      ),
+      "additionalHash" -> BSONDocument
+      (
+        "$eq" -> additionalHash
       )
+    )
 
     analyzedPacketsCollection.flatMap(_.find(query).cursor[Packet]().collect[Seq]())
   }
@@ -86,11 +96,11 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     val ids = packetsToRemove.map(_._id)
 
     val query = BSONDocument(
-       "_id" -> BSONDocument(
-         "$in" -> ids))
+      "_id" -> BSONDocument(
+        "$in" -> ids))
 
     val rs = packetsCollection.flatMap(_.remove(query))
-    rs.onFailure{
+    rs.onFailure {
       case ex => ex.printStackTrace()
     }
     rs
@@ -104,7 +114,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
         "$in" -> ids))
 
     val rs = analyzedPacketsCollection.flatMap(_.remove(query))
-    rs.onFailure{
+    rs.onFailure {
       case ex => ex.printStackTrace()
     }
     rs
@@ -116,7 +126,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
         "$eq" -> flowKey))
 
     val rs = analyzedPacketsCollection.flatMap(_.remove(query))
-    rs.onFailure{
+    rs.onFailure {
       case ex => ex.printStackTrace()
     }
     rs
@@ -127,7 +137,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     val rs = analyzedPacketsCollection.flatMap[MultiBulkWriteResult](
       _.bulkInsert(docs, ordered = false)
     )
-    rs.onFailure{
+    rs.onFailure {
       case ex => ex.printStackTrace()
     }
     rs
@@ -143,7 +153,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     )
 
     val rs = packetsCollection.flatMap(_.remove(query))
-    rs.onFailure{
+    rs.onFailure {
       case ex => ex.printStackTrace()
     }
     rs
@@ -161,7 +171,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     Future.sequence(Seq(
       packetsCollection.flatMap(_.remove(BSONDocument())),
       analyzedPacketsCollection.flatMap(_.remove(BSONDocument()))
-    )).flatMap(rs => Future{})
+    )).flatMap(rs => Future {})
   }
 
   def areThereMorePackets(flowKey: Long, additionalHash: Long): Future[Boolean] = {
@@ -177,7 +187,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     )
 
     val f = packetsCollection.flatMap(_.count(Option(query))).map(result => result > 0)
-    f.onFailure{case e: Throwable => e.printStackTrace()}
+    f.onFailure { case e: Throwable => e.printStackTrace() }
     f
   }
 
@@ -194,7 +204,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
     )
 
     val f = packetsCollection.flatMap(_.count(Option(query))).map(result => result > 0)
-    f.onFailure{case e: Throwable => e.printStackTrace()}
+    f.onFailure { case e: Throwable => e.printStackTrace() }
     f
   }
 
@@ -219,7 +229,7 @@ class PacketRepositoryImpl @Inject()(val mongoDBConnection: MongoDBConnection, v
 
     analyzedPacketsCollection.flatMap(rs => {
       var queryBuilder = rs.find(query)
-      queryBuilder = if(analyzedPacketFilter.sourcePort != PortUtils.NO_PORT) {
+      queryBuilder = if (analyzedPacketFilter.sourcePort != PortUtils.NO_PORT) {
         queryBuilder.query(BSONDocument(
           "sourcePort" -> BSONDocument(
             "$eq" -> analyzedPacketFilter.sourcePort

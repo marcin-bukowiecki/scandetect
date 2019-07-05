@@ -21,11 +21,11 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 @Singleton
-class ScanDetectWorker @Inject() (packetService: PacketRepositoryImpl,
-                                  scanDetectionAlgorithm: ScanDetectionAlgorithm,
-                                  system: ActorSystem,
-                                  alertsService: AlertRepositoryImpl,
-                                  iterationResultHistoryRepository: IterationResultHistoryRepository) {
+class ScanDetectWorker @Inject()(packetService: PacketRepositoryImpl,
+                                 scanDetectionAlgorithm: ScanDetectionAlgorithm,
+                                 system: ActorSystem,
+                                 alertsService: AlertRepositoryImpl,
+                                 iterationResultHistoryRepository: IterationResultHistoryRepository) {
 
   implicit private val timeout = Timeout(5.seconds)
 
@@ -74,8 +74,8 @@ class ScanDetectWorker @Inject() (packetService: PacketRepositoryImpl,
   def detectNetworkScans(): Unit = {
     if (doWork.get()) {
       iterationResultHistoryRepository
-         .findByResultType(Constants.IterationResultHistoryLabels.suspiciousNetworkScan)
-          .onComplete {
+        .findByResultType(Constants.IterationResultHistoryLabels.suspiciousNetworkScan)
+        .onComplete {
           case Success(rs) =>
             Future.sequence(
               if (rs.nonEmpty) scanDetectionAlgorithm.detectNetworkScans(this, rs) else Seq()

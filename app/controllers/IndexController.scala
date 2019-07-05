@@ -11,11 +11,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 @Singleton
-class IndexController @Inject() (captureService: CaptureService,
-                                 scanDetectContext: ScanDetectContext,
-                                 alertRepository: AlertRepository,
-                                 packetService: PacketRepositoryImpl,
-                                 mongoDBConnection: MongoDBConnection) extends Controller {
+class IndexController @Inject()(captureService: CaptureService,
+                                scanDetectContext: ScanDetectContext,
+                                alertRepository: AlertRepository,
+                                packetService: PacketRepositoryImpl,
+                                mongoDBConnection: MongoDBConnection) extends Controller {
 
   def index() = Action {
     Ok(views.html.index("Your new application is ready."))
@@ -39,9 +39,9 @@ class IndexController @Inject() (captureService: CaptureService,
         BadRequest("Expecting Json data")
       }
     }
-      /*
-    captureService.allowCapturing.set(true)
-    Ok("Started monitoring ports")*/
+    /*
+  captureService.allowCapturing.set(true)
+  Ok("Started monitoring ports")*/
   }
 
   def stopMonitoringPorts = Action {

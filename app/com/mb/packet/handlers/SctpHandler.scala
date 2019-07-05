@@ -1,4 +1,5 @@
 package com.mb.packet.handlers
+
 import models.Packet
 import org.jnetpcap.packet.PcapPacket
 import org.jnetpcap.protocol.network.{Ip4, Ip6}

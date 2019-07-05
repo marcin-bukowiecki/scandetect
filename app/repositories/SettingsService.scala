@@ -15,11 +15,12 @@ import scala.concurrent.duration._
   * Created by Marcin on 2016-12-14.
   */
 @Singleton
-class SettingsService @Inject() (val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) {
+class SettingsService @Inject()(val mongoDBConnection: MongoDBConnection, val akkaSystem: ActorSystem) {
 
   implicit val executionContext: ExecutionContext = akkaSystem.dispatchers.lookup("settings-service-context")
 
   implicit def packetReader: BSONDocumentReader[Settings] = Macros.reader[Settings]
+
   implicit def packetWriter: BSONDocumentWriter[Settings] = Macros.writer[Settings]
 
   def settingsCollection = mongoDBConnection.database.map(_.collection[BSONCollection]("settings"))

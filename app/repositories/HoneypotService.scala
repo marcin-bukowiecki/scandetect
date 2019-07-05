@@ -11,8 +11,8 @@ import reactivemongo.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter,
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class HoneypotService @Inject() (val honeypotMongoDBConnection: HoneypotMongoDBConnection,
-                                 val akkaSystem: ActorSystem)  {
+class HoneypotService @Inject()(val honeypotMongoDBConnection: HoneypotMongoDBConnection,
+                                val akkaSystem: ActorSystem) {
 
   private val log = Logger
 
@@ -21,6 +21,7 @@ class HoneypotService @Inject() (val honeypotMongoDBConnection: HoneypotMongoDBC
   def collection: Future[BSONCollection] = honeypotMongoDBConnection.database.map(_.collection[BSONCollection]("iteration_result_history"))
 
   implicit def iterationResultHistoryReader: BSONDocumentReader[IterationResultHistory] = Macros.reader[IterationResultHistory]
+
   implicit def iterationResultHistoryWriter: BSONDocumentWriter[IterationResultHistory] = Macros.writer[IterationResultHistory]
 
   implicit def infoMapReader: BSONHandler[BSONDocument, Map[String, String]] = IterationResultInfo

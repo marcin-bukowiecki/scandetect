@@ -16,14 +16,14 @@ import utils.{Constants, NetworkInterfaceUtils}
   * Created by Marcin on 2016-09-14.
   */
 @Singleton
-class NetworkInterfaceService @Inject() (scanDetectContext: ScanDetectContext) {
+class NetworkInterfaceService @Inject()(scanDetectContext: ScanDetectContext) {
 
   def getNetworkDevices() = {
     val errorBuffer = new StringBuilder()
     val devices = new util.ArrayList[PcapIf]()
 
     try {
-      Pcap.findAllDevs(devices,  errorBuffer)
+      Pcap.findAllDevs(devices, errorBuffer)
     } catch {
       case ex: UnsatisfiedLinkError => ex.printStackTrace()
     }

@@ -10,10 +10,13 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 @ImplementedBy(classOf[HoneypotMongoDBConnectionImpl])
-trait  HoneypotMongoDBConnection {
+trait HoneypotMongoDBConnection {
   def database: Future[DefaultDB]
+
   def initConnection(scanDetectContext: ScanDetectContext)
+
   def closeConnection()
+
   def db: DefaultDB
 }
 

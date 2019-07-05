@@ -33,6 +33,7 @@ class IterationResultHistoryRepositoryImpl @Inject()(val mongoDBConnection: Mong
   implicit val iterationResultHistoryContext: ExecutionContext = akkaSystem.dispatchers.lookup("iteration-result-history-context")
 
   implicit def iterationResultHistoryReader: BSONDocumentReader[IterationResultHistory] = Macros.reader[IterationResultHistory]
+
   implicit def iterationResultHistoryWriter: BSONDocumentWriter[IterationResultHistory] = Macros.writer[IterationResultHistory]
 
   implicit def infoMapReader: BSONHandler[BSONDocument, Map[String, String]] = IterationResultInfo
@@ -41,7 +42,7 @@ class IterationResultHistoryRepositoryImpl @Inject()(val mongoDBConnection: Mong
 
   def create(iterationResultHistory: IterationResultHistory): Future[Unit] = {
     val f = collection.flatMap(_.insert(iterationResultHistory).map(_ => {}))
-    f.onFailure{case e: Throwable => e.printStackTrace()}
+    f.onFailure { case e: Throwable => e.printStackTrace() }
     f
   }
 

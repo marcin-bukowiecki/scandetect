@@ -12,7 +12,9 @@ import scala.concurrent.duration._
 @ImplementedBy(classOf[MongoDBConnectionImpl])
 trait MongoDBConnection {
   def database: Future[DefaultDB]
+
   def initConnection(scanDetectContext: ScanDetectContext)
+
   def db: DefaultDB
 }
 

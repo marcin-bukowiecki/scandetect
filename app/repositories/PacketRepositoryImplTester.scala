@@ -10,6 +10,6 @@ import scala.concurrent.Future
   */
 class PacketRepositoryImplTester(mongoDBConnection: MongoDBConnection = null) extends PacketRepositoryImpl(mongoDBConnection: MongoDBConnection, null) {
 
-  override def create(packet: Packet): Future[Unit] = Future{}
+  override def create(packet: Packet): Future[Unit] = Future {}
 
 }
