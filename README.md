@@ -1,7 +1,7 @@
 scandetect
 ==========================
 
-This version is currenlty in tests...
+This version is currently in tests...
 
 ## Overview
 
@@ -57,6 +57,9 @@ so they should not check the next port while a port scan is scanning a range of 
 
 4. Connection attempts to closed ports threshold - 1 below threshold, 2 at threshold, 3 over threshold
 
-5. Neighboring port factor - i.e. when ports 1,2,3,4,5,6,7,8 were scanned the factor will be 1. This is calculated
-from this pattern:
+5. Neighboring port factor
+
+6. Used open ports to transferred packets factor
+
+7. Connection attempts to closed ports factor
 
