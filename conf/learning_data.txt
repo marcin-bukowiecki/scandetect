@@ -1,3 +1,4 @@
+"host init connection","data transfer","connection to closed port","closed port threshold","neighboring port factor","packet/open port factor","packet/closed port factor","is scan?"
 1,1,1,1,0,0,0,1
 1,2,1,1,0,0,0,1
 1,3,1,1,0,1,0,1
@@ -36,7 +37,7 @@
 3,3,3,3,0.90,0.50,0.90,3
 3,3,3,3,0.50,0.50,0.90,3
 3,3,3,3,0.60,0.50,0.90,3
-3,1,1,2,1,0,0.60,2
+0,2
 3,1,1,2,1,0.10,0.60,2
 3,1,1,2,1,0.05,0.60,2
 3,1,1,2,1,0.15,0.60,2

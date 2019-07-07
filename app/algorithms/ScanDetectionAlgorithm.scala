@@ -410,11 +410,11 @@ class ScanDetectionAlgorithm @Inject()(val packetService: PacketRepositoryImpl,
         val chance = try {
           val neuralNetworkResult = worker.scanDetectContext.scanDetectNeuralNetwork
             .getResultAsPercentage(checkingContext.createWeights.map(new Double(_)).toList.asJava)
-          log.info("Neural network result => " + neuralNetworkResult)
+          log.info("Random forest result => " + neuralNetworkResult)
           neuralNetworkResult
         } catch {
           case e: Throwable =>
-            log.error("Error while getting result from neural network.", e)
+            log.error("Error while getting result from random forest.", e)
             Constants.INTEGER_ZERO
         }
         chance

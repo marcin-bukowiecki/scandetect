@@ -5,7 +5,7 @@ This version is currenlty in tests...
 
 ## Overview
 
-Scandetect detects network and port scan. Its writen in Scala and Java. 
+Scandetect detects network and port scan. Its written in Scala and Java. 
 It can run as a standalone application where you can detect port scans or with 
 another machine which acts as a honeypot where you can detect network scans.
 
@@ -37,3 +37,26 @@ Actually it detects from 5:
 - Masscan
 - Evilscan
 - Angry IP Scanner
+
+## How it works?
+
+Scandetect is using jNetPcap to capture incoming and outcoming packets on host machine. Then it extracts packet data
+and saves it in the Mongo database. While program is running Scandetect will analyze saved packets to check is there was a
+port scan.
+
+The detection is done using simple Random Forest classification according to 7 features.
+
+1. Out machine was initializing the connection - this can be 1 or 0. 1 when our machine initialized the connection.
+This is checked because typically unknown IP addresses are scanning our ports (so they are initializing the connection).
+
+2. Data transfer - 1 when data was transferred from given IP address, 3 when no data was transferred from given IP address,
+2 for both conditions.
+
+3. Tried to connect to an closed port after open - typically network services are searching for an open port 
+so they should not check the next port while a port scan is scanning a range of ports. Value 1 or 0.
+
+4. Connection attempts to closed ports threshold - 1 below threshold, 2 at threshold, 3 over threshold
+
+5. Neighboring port factor - i.e. when ports 1,2,3,4,5,6,7,8 were scanned the factor will be 1. This is calculated
+from this pattern:
+

@@ -1,5 +1,6 @@
 package worker
 
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 import actors.ScanAttackAndTypeDetectorActor
@@ -31,6 +32,8 @@ class ScanDetectWorker @Inject()(packetService: PacketRepositoryImpl,
 
   private val log = Logger
 
+  private val detectScanThreadPool = Executors.newFixedThreadPool(1)
+
   var scanDetectContext: ScanDetectContext = _
 
   val doWork = new AtomicBoolean(false)
@@ -56,19 +59,23 @@ class ScanDetectWorker @Inject()(packetService: PacketRepositoryImpl,
   }
 
   def detectScans(): Unit = {
-    if (doWork.get()) {
-      packetService
-        .getToAnalyze(500)
-        .onComplete {
-          case Success(rs) =>
-            Future.sequence(
-              if (rs.nonEmpty) scanDetectionAlgorithm.detect(this, rs) else Seq()
-            ).map(_ => {
-              detectScans()
-            })
-          case Failure(ex) => ex.printStackTrace()
+    detectScanThreadPool.submit(new Runnable {
+      override def run(): Unit = {
+        if (doWork.get()) {
+          packetService
+            .getToAnalyze(500)
+            .onComplete {
+              case Success(rs) =>
+                Future.sequence(
+                  if (rs.nonEmpty) scanDetectionAlgorithm.detect(ScanDetectWorker.this, rs) else Seq()
+                ).map(_ => {
+                  detectScans()
+                })
+              case Failure(ex) => ex.printStackTrace()
+            }
         }
-    }
+      }
+    })
   }
 
   def detectNetworkScans(): Unit = {

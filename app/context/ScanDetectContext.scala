@@ -5,7 +5,7 @@ import java.lang.StringBuilder
 import java.util
 
 import models.Settings
-import neuralnetwork.ScanDetectNeuralNetwork
+import neuralnetwork.ScanDetectRandomForest
 import org.jnetpcap.{Pcap, PcapIf}
 import play.api.Logger
 import repositories.{CaptureService, SettingsService}
@@ -156,16 +156,16 @@ class ScanDetectContext @Inject()(val captureService: CaptureService,
     })
   }
 
-  var scanDetectNeuralNetwork = new ScanDetectNeuralNetwork
+  var scanDetectNeuralNetwork = new ScanDetectRandomForest
 
   def initNeuralNetworks() = {
-    log.info("Initializing neural networks. This may take a while.")
+    log.info("Initializing random forest. This may take a while.")
 
     try {
       scanDetectNeuralNetwork.init()
     } catch {
       case e: Throwable =>
-        log.error("Error while initializing neural networks.", e)
+        log.error("Error while initializing random forest.", e)
     }
 
     log.info("Initializing ended.")
